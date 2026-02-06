@@ -19,38 +19,43 @@
       <button class="checkoutBtn" (click)="checkout()" [disabled]="currentOrder.length === 0">KASSIEREN</button>
       <button class="clearBtn" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">STORNO (letzter)</button>
       <button class="clearBtn" (click)="clearOrder()" [disabled]="currentOrder.length === 0">LEEREN</button>
+      <button class="clearBtn" (click)="toggleSales()">
+        {{ showSales ? 'HISTORIE AUSBLENDEN' : 'LETZTE VERKÄUFE' }}
+      </button>
     </div>
   </div>
 </section>
 
-<section class="sales">
-  <h2>Letzte Verkäufe</h2>
+@if (showSales) {
+  <section class="sales">
+    <h2>Letzte Verkäufe</h2>
 
-  @if (orders.length === 0) {
-    <p class="muted">Noch keine Verkäufe.</p>
-  } @else {
-    <ul class="salesList">
-      @for (o of orders; track o.id) {
-        <li class="saleRow" (click)="toggleOrderDetails(o.id)">
-          <span>{{ o.items.length }} Artikel</span>
-          <strong>{{ formatEUR(o.totalCents) }}</strong>
-        </li>
-
-        @if (expandedOrderId === o.id) {
-          <li class="saleDetails">
-            <div class="saleDate">{{ formatDateTime(o.timestamp) }}</div>
-
-            <ul class="detailsList">
-              @for (g of summarizeItems(o.items); track $index) {
-                <li class="detailRow">
-                  <span>{{ g.qty }} × {{ g.name }}</span>
-                  <span>{{ formatEUR(g.lineTotalCents) }}</span>
-                </li>
-              }
-            </ul>
+    @if (orders.length === 0) {
+      <p class="muted">Noch keine Verkäufe.</p>
+    } @else {
+      <ul class="salesList">
+        @for (o of orders; track o.id) {
+          <li class="saleRow" (click)="toggleOrderDetails(o.id)">
+            <span>{{ o.items.length }} Artikel</span>
+            <strong>{{ formatEUR(o.totalCents) }}</strong>
           </li>
+
+          @if (expandedOrderId === o.id) {
+            <li class="saleDetails">
+              <div class="saleDate">{{ formatDateTime(o.timestamp) }}</div>
+
+              <ul class="detailsList">
+                @for (g of summarizeItems(o.items); track $index) {
+                  <li class="detailRow">
+                    <span>{{ g.qty }} × {{ g.name }}</span>
+                    <span>{{ formatEUR(g.lineTotalCents) }}</span>
+                  </li>
+                }
+              </ul>
+            </li>
+          }
         }
-      }
-    </ul>
-  }
-</section>
+      </ul>
+    }
+  </section>
+}

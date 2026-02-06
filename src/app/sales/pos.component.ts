@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Product } from '../products/product.model';
 import { ProductService } from '../products/product.service';
+import { OrdersDbService } from '../core/orders-db.service';
 
 type Order = {
   id: string;
@@ -16,15 +17,34 @@ type Order = {
   imports: [CommonModule],
   templateUrl: './pos.component.html',
 })
-export class PosComponent {
+export class PosComponent implements OnInit {
   products: Product[] = [];
 
   currentOrder: Product[] = [];
   orders: Order[] = [];
   expandedOrderId: string | null = null;
 
-  constructor(private productService: ProductService) {
-    this.products = this.productService.getAll();
+  showSales = false;
+
+  toggleSales() {
+    this.showSales = !this.showSales;
+    this.expandedOrderId = null;
+  }
+
+  constructor(
+  private productService: ProductService,
+  private ordersDb: OrdersDbService
+) {
+  this.products = this.productService.getAll();
+}
+
+  async ngOnInit() {
+    const stored = await this.ordersDb.getAllOrders();
+console.log('📦 IndexedDB orders loaded:', stored);
+    // newest first
+    this.orders = stored
+      .slice()
+      .sort((a, b) => b.timestamp - a.timestamp) as unknown as Order[];
   }
 
   addItem(product: Product) {
@@ -40,7 +60,7 @@ export class PosComponent {
     this.currentOrder = [];
   }
 
-  checkout() {
+  async checkout() {
     if (this.currentOrder.length === 0) return;
 
     // ✅ 1) sumar "uso" por cada producto vendido
@@ -54,6 +74,14 @@ export class PosComponent {
       totalCents,
       timestamp: Date.now(),
     };
+
+    try {
+  await this.ordersDb.addOrder(order);
+  console.log('✅ saved to IndexedDB', order.id);
+} catch (e) {
+  console.error('❌ IndexedDB save failed', e);
+}
+
 
     this.orders = [order, ...this.orders];
     this.clearOrder();
