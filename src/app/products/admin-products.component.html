@@ -1,0 +1,88 @@
+<div class="container">
+  <header class="header">
+    <div>
+      <h1>Admin – Produkte</h1>
+      <p class="muted">Produkte hinzufügen, Preise ändern, löschen (offline).</p>
+    </div>
+
+    <div class="total">
+      <div class="muted">Status</div>
+      <div class="totalValue">{{ isAdmin ? 'ADMIN' : 'GESPERRT' }}</div>
+    </div>
+  </header>
+
+  @if (!isAdmin) {
+    <section class="checkout">
+      <div class="checkoutBox">
+        <div>
+          <div class="muted">PIN eingeben</div>
+          <input
+            type="password"
+            [(ngModel)]="pinInput"
+            placeholder="PIN"
+            style="padding: 12px; border-radius: 12px; width: 140px;"
+          />
+        </div>
+
+        <div class="checkoutActions">
+          <button class="checkoutBtn" (click)="enterAdmin()">Entsperren</button>
+        </div>
+      </div>
+    </section>
+  } @else {
+    <section class="checkout">
+      <div class="checkoutBox">
+        <div>
+          <div class="muted">Neues Produkt</div>
+          <div style="display:flex; gap:10px; margin-top:8px; flex-wrap:wrap;">
+            <input
+              [(ngModel)]="newName"
+              placeholder="Name (z.B. Cola)"
+              style="padding: 12px; border-radius: 12px; min-width: 220px;"
+            />
+            <input
+              [(ngModel)]="newPriceEUR"
+              placeholder="Preis (z.B. 3,00)"
+              style="padding: 12px; border-radius: 12px; width: 160px;"
+            />
+          </div>
+        </div>
+
+        <div class="checkoutActions">
+          <button class="checkoutBtn" (click)="addProduct()">Hinzufügen</button>
+          <button class="clearBtn" (click)="exitAdmin()">Sperren</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sales">
+      <h2>Produkte</h2>
+
+      <ul class="salesList">
+        @for (p of products; track p.id) {
+          <li class="saleRow">
+            <div style="display:flex; flex-direction:column; gap:6px; flex:1;">
+              <input
+                [(ngModel)]="p.name"
+                (blur)="updateProduct(p)"
+                style="padding:10px; border-radius:12px;"
+              />
+              <div class="muted">ID: {{ p.id }}</div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+              <input
+                [ngModel]="(p.priceCents / 100).toFixed(2)"
+                (ngModelChange)="p.priceCents = Math.round(Number(($event+'').replace(',', '.')) * 100)"
+                (blur)="updateProduct(p)"
+                style="padding:10px; border-radius:12px; width:140px; text-align:right;"
+              />
+              <strong>{{ formatEUR(p.priceCents) }}</strong>
+              <button class="clearBtn" (click)="removeProduct(p)">Löschen</button>
+            </div>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

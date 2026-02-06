@@ -1,1 +1,104 @@
-/* You can add global styles to this file, and also import other style files */
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: #0f1115;
+  color: #f5f7ff;
+}
+
+.container {
+  padding: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.muted {
+  opacity: 0.7;
+}
+
+.total {
+  text-align: right;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+}
+
+.totalValue {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.productBtn {
+  padding: 18px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+}
+
+.productBtn:active {
+  transform: scale(0.99);
+}
+
+.pName {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.pPrice {
+  margin-top: 6px;
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+.sales {
+  margin-top: 18px;
+}
+
+.salesList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.saleRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.detailRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.detailRow span:first-child {
+  flex: 1;              /* el texto ocupa el espacio */
+}
+
+.detailRow span:last-child {
+  font-weight: 700;
+  white-space: nowrap;  /* evita saltos raros */
+}
+.detailRow:not(:last-child) {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
