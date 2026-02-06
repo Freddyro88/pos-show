@@ -117,6 +117,14 @@ export class AdminProductsComponent {
 
   trackByProduct = (_: number, p: AdminProduct) => this.idOf(p);
 
+  get canAddProduct(): boolean {
+  const nameOk = this.newName.trim().length > 0;
+  const cents = this.parseMoneyToCents(this.newPriceEUR);
+  const priceOk = cents !== null && cents > 0;
+  return nameOk && priceOk;
+}
+
+
   // ===== CRUD: Add =====
   addProduct() {
     const name = this.newName.trim();
@@ -156,12 +164,14 @@ export class AdminProductsComponent {
 
   // ===== CRUD: Remove (con confirmación) =====
   removeProduct(p: AdminProduct) {
-    const ok = confirm(`Löschen: ${p.name ?? ''}?`);
-    if (!ok) return;
+  const name = (p.name ?? '').trim() || 'dieses Produkt';
+  const ok = window.confirm(`Sicher löschen: "${name}"? Diese Aktion kann nicht rückgängig gemacht werden.`);
+  if (!ok) return;
 
-    this.productService.remove(p.id);
-    this.refresh();
-  }
+  this.productService.remove(p.id);
+  this.refresh();
+}
+
 
   // Alternativa si quieres el texto “más seguro”
   confirmDelete(p: AdminProduct) {
@@ -257,3 +267,4 @@ export class AdminProductsComponent {
     return String(p.id);
   }
 }
+

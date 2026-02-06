@@ -43,6 +43,9 @@ export class PosComponent {
   checkout() {
     if (this.currentOrder.length === 0) return;
 
+    // ✅ 1) sumar "uso" por cada producto vendido
+    this.bumpUsageFromCurrentOrder();
+
     const totalCents = this.currentOrder.reduce((sum, p) => sum + p.priceCents, 0);
 
     const order: Order = {
@@ -54,6 +57,21 @@ export class PosComponent {
 
     this.orders = [order, ...this.orders];
     this.clearOrder();
+
+    // opcional: refrescar productos (por si en algún lugar muestras usageCount)
+    this.products = this.productService.getAll();
+  }
+
+  private bumpUsageFromCurrentOrder() {
+    const counts = new Map<string, number>();
+
+    for (const p of this.currentOrder) {
+      counts.set(p.id, (counts.get(p.id) ?? 0) + 1);
+    }
+
+    for (const [id, qty] of counts) {
+      this.productService.incrementUsage(id, qty);
+    }
   }
 
   toggleOrderDetails(orderId: string) {

@@ -30,6 +30,7 @@
       </div>
     </section>
   } @else {
+    <!-- Nuevo producto -->
     <section class="checkout">
       <div class="checkoutBox">
         <div>
@@ -50,7 +51,7 @@
 
             <select
               [(ngModel)]="newCategory"
-              style="padding: 12px; border-radius: 12px; min-width: 160px;"
+              style="padding: 12px; border-radius: 12px; min-width: 170px;"
               title="Kategorie"
             >
               @for (c of categories; track c.value) {
@@ -58,15 +59,22 @@
               }
             </select>
           </div>
+
+          <div class="muted" style="margin-top:8px;">
+            Tipp: Preis akzeptiert z.B. <strong>3</strong>, <strong>3,5</strong>, <strong>€ 3,50</strong>, <strong>1.234,56</strong>
+          </div>
         </div>
 
         <div class="checkoutActions">
-          <button class="checkoutBtn" (click)="addProduct()">Hinzufügen</button>
+          <button class="checkoutBtn" (click)="addProduct()" [disabled]="!canAddProduct">
+            Hinzufügen
+          </button>
           <button class="clearBtn" (click)="exitAdmin()">Sperren</button>
         </div>
       </div>
     </section>
 
+    <!-- Productos -->
     <section class="sales">
       <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:12px; flex-wrap:wrap;">
         <div>
@@ -74,7 +82,7 @@
           <div class="muted">Anzahl: {{ visibleProducts.length }}</div>
         </div>
 
-        <!-- Filtros + orden -->
+        <!-- Búsqueda + filtros + orden -->
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <input
             [(ngModel)]="search"
@@ -84,7 +92,7 @@
 
           <select
             [(ngModel)]="categoryFilter"
-            style="padding:10px; border-radius:12px; min-width:160px;"
+            style="padding:10px; border-radius:12px; min-width:170px;"
             title="Filter Kategorie"
           >
             <option value="all">Alle Kategorien</option>
@@ -109,16 +117,20 @@
       <ul class="salesList" style="margin-top:12px;">
         @for (p of visibleProducts; track p.id) {
           <li class="saleRow">
-            <!-- Left: name + id + category + validation -->
+            <!-- Left column -->
             <div style="display:flex; flex-direction:column; gap:6px; flex:1;">
               <input
                 [(ngModel)]="p.name"
-                (blur)="updateProduct(p)"
+                (ngModelChange)="validateProduct(p)"
+                (blur)="validateProduct(p)"
+                placeholder="Name"
                 style="padding:10px; border-radius:12px;"
               />
 
               @if (errorsById[''+p.id]?.name) {
-                <div class="muted" style="color:#c62828;">{{ errorsById[''+p.id]?.name }}</div>
+                <div class="muted" style="color:#c62828;">
+                  {{ errorsById[''+p.id]?.name }}
+                </div>
               }
 
               <div class="muted">ID: {{ p.id }}</div>
@@ -126,8 +138,8 @@
               <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                 <select
                   [(ngModel)]="p.category"
-                  (change)="updateProduct(p)"
-                  style="padding:10px; border-radius:12px; min-width:160px;"
+                  (change)="validateProduct(p)"
+                  style="padding:10px; border-radius:12px; min-width:170px;"
                   title="Kategorie"
                 >
                   <option [ngValue]="undefined">— Kategorie —</option>
@@ -142,27 +154,50 @@
               </div>
 
               @if (errorsById[''+p.id]?.category) {
-                <div class="muted" style="color:#c62828;">{{ errorsById[''+p.id]?.category }}</div>
+                <div class="muted" style="color:#c62828;">
+                  {{ errorsById[''+p.id]?.category }}
+                </div>
               }
             </div>
 
-            <!-- Right: price + formatted + delete -->
-            <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+            <!-- Right column -->
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
               <input
                 [ngModel]="priceInputById[''+p.id] ?? ((p.priceCents ?? 0) / 100).toFixed(2).replace('.', ',')"
                 (ngModelChange)="onPriceInput(p, $event)"
-                (blur)="onPriceBlur(p); updateProduct(p)"
+                (blur)="onPriceBlur(p); validateProduct(p)"
                 inputmode="decimal"
+                placeholder="0,00"
                 style="padding:10px; border-radius:12px; width:140px; text-align:right;"
               />
 
               @if (errorsById[''+p.id]?.price) {
-                <div class="muted" style="color:#c62828;">{{ errorsById[''+p.id]?.price }}</div>
+                <div class="muted" style="color:#c62828; text-align:right;">
+                  {{ errorsById[''+p.id]?.price }}
+                </div>
               }
 
-              <strong>{{ formatEUR(p.priceCents) }}</strong>
+              <strong>{{ formatEUR(p.priceCents ?? 0) }}</strong>
 
-              <button class="clearBtn" (click)="removeProduct(p)">Löschen</button>
+              <div style="display:flex; gap:10px; align-items:center;">
+                <button
+                  class="checkoutBtn"
+                  (click)="updateProduct(p)"
+                  [disabled]="hasErrors(p)"
+                  [title]="hasErrors(p) ? 'Bitte Fehler beheben.' : 'Speichern'"
+                >
+                  Speichern
+                </button>
+
+                <button
+                  class="clearBtn"
+                  (click)="removeProduct(p)"
+                  [disabled]="hasErrors(p)"
+                  [title]="hasErrors(p) ? 'Bitte Fehler beheben, bevor du löschst.' : 'Löschen'"
+                >
+                  Löschen
+                </button>
+              </div>
             </div>
           </li>
         }
