@@ -1,3 +1,30 @@
+@if (updateAvailable) {
+  <div style="
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 9999;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(20,20,20,0.95);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+  ">
+    <span>Neue Version verfügbar.</span>
+
+    <div style="display:flex; gap:10px;">
+      <button class="checkoutBtn" (click)="reloadToUpdate()">Aktualisieren</button>
+      <button class="clearBtn" (click)="dismissUpdate()">Später</button>
+    </div>
+  </div>
+}
+
 <div class="container">
   <header class="header">
     <div>
