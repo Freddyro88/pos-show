@@ -1,61 +1,179 @@
-<section class="grid">
-  @for (p of products; track p.id) {
-    <button class="productBtn" (click)="addItem(p)">
-      <div class="pName">{{ p.name }}</div>
-      <div class="pPrice">{{ formatEUR(p.priceCents) }}</div>
-    </button>
-  }
-</section>
+<!-- ─────────────────────────────────────────
+   RESUMEN DE KASSENSCHICHT CERRADA
+   Aparece después de cerrar la Kassenschicht
+───────────────────────────────────────── -->
+@if (closedShift) {
 
-<section class="checkout">
-  <div class="checkoutBox">
-    <div>
-      <div class="muted">Aktueller Verkauf</div>
-      <div class="checkoutTotal">{{ formatEUR(currentTotalCents) }}</div>
-      <div class="muted small">{{ currentOrder.length }} Artikel</div>
-    </div>
+  <app-shift-summary
+    [shift]="closedShift"
+    [orders]="closedShiftOrders"
+    (newShift)="openShift()">
+  </app-shift-summary>
 
-    <div class="checkoutActions">
-      <button class="checkoutBtn" (click)="checkout()" [disabled]="currentOrder.length === 0">KASSIEREN</button>
-      <button class="clearBtn" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">STORNO (letzter)</button>
-      <button class="clearBtn" (click)="clearOrder()" [disabled]="currentOrder.length === 0">LEEREN</button>
-      <button class="clearBtn" (click)="toggleSales()">
-        {{ showSales ? 'HISTORIE AUSBLENDEN' : 'LETZTE VERKÄUFE' }}
+<!-- ─────────────────────────────────────────
+   PANTALLA SIN KASSENSCHICHT ACTIVA
+   Aparece al iniciar sin Kassenschicht
+───────────────────────────────────────── -->
+} @else if (!activeShift) {
+
+  <div class="shift-screen">
+    <div class="shift-box">
+      <div class="shift-icon">🏪</div>
+      <h1 class="shift-title">POS Show</h1>
+      <p class="shift-subtitle">Keine offene Kassenschicht</p>
+      <!-- Botón verde para abrir Kassenschicht -->
+      <button class="btn-open-shift" (click)="openShift()">
+        ▶ Kassenschicht öffnen
       </button>
     </div>
   </div>
-</section>
 
-@if (showSales) {
-  <section class="sales">
-    <h2>Letzte Verkäufe</h2>
+<!-- ─────────────────────────────────────────
+   POS ACTIVO — solo con Kassenschicht abierta
+───────────────────────────────────────── -->
+} @else {
 
-    @if (orders.length === 0) {
-      <p class="muted">Noch keine Verkäufe.</p>
-    } @else {
-      <ul class="salesList">
-        @for (o of orders; track o.id) {
-          <li class="saleRow" (click)="toggleOrderDetails(o.id)">
-            <span>{{ o.items.length }} Artikel</span>
-            <strong>{{ formatEUR(o.totalCents) }}</strong>
-          </li>
+  <!-- Layout principal dos columnas -->
+  <div class="pos-layout">
 
-          @if (expandedOrderId === o.id) {
-            <li class="saleDetails">
-              <div class="saleDate">{{ formatDateTime(o.timestamp) }}</div>
+    <!-- ─── PANEL IZQUIERDO — Produkte ─── -->
+    <section class="products-panel">
+      <div class="panel-header">
+        <span class="brand">POS Show</span>
+        <span class="status-dot">● Offline</span>
+      </div>
 
-              <ul class="detailsList">
-                @for (g of summarizeItems(o.items); track $index) {
-                  <li class="detailRow">
-                    <span>{{ g.qty }} × {{ g.name }}</span>
-                    <span>{{ formatEUR(g.lineTotalCents) }}</span>
-                  </li>
-                }
-              </ul>
+      <!-- Grid de botones de productos -->
+      <div class="products-grid">
+        @for (p of products; track p.id) {
+          <button class="product-btn" (click)="addItem(p)">
+            <span class="product-name">{{ p.name }}</span>
+            <span class="product-price">{{ formatEUR(p.priceCents) }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- ─── PANEL DERECHO — Kasse / Checkout ─── -->
+    <aside class="checkout-panel">
+
+      <!-- Barra verde con info de Kassenschicht y botón cerrar -->
+      <div class="shift-info">
+        <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
+        <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
+      </div>
+
+      <!-- Gesamtbetrag groß -->
+      <div class="total-section">
+        <div class="total-label">Gesamt</div>
+        <div class="total-amount" [class.has-items]="currentOrder.length > 0">
+          {{ formatEUR(currentTotalCents) }}
+        </div>
+        <div class="item-count">
+          @if (currentOrder.length === 0) {
+            <span class="muted">Keine Artikel</span>
+          } @else {
+            <span class="badge">{{ currentOrder.length }} Artikel</span>
+          }
+        </div>
+      </div>
+
+      <!-- Liste der Artikel mit ✕ zum Löschen -->
+      @if (currentOrder.length > 0) {
+        <div class="current-items">
+          @for (g of summarizeItems(currentOrder); track $index) {
+            <div class="current-item-row">
+              <span class="item-qty">{{ g.qty }}×</span>
+              <span class="item-name">{{ g.name }}</span>
+              <span class="item-total">{{ formatEUR(g.lineTotalCents) }}</span>
+              <!-- ✕ löscht eine Einheit des Produkts -->
+              <button class="btn-remove-item" (click)="removeItem(g.id)">✕</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Abstand zwischen Liste und Buttons -->
+      <div class="spacer"></div>
+
+      <!-- ─── Aktionsbuttons ─── -->
+      <div class="actions">
+
+        <!-- KASSIEREN — Verkauf bestätigen -->
+        <button class="btn-kassieren" (click)="checkout()" [disabled]="currentOrder.length === 0">
+          <span class="btn-icon">✓</span>
+          KASSIEREN
+        </button>
+
+        <!-- STORNO + LEEREN nebeneinander -->
+        <div class="btn-row">
+          <!-- STORNO — letzten Artikel entfernen -->
+          <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
+            ↩ STORNO
+          </button>
+          <!-- LEEREN — aktuellen Verkauf leeren -->
+          <button class="btn-secondary btn-danger" (click)="clearOrder()" [disabled]="currentOrder.length === 0">
+            ✕ LEEREN
+          </button>
+        </div>
+
+        <!-- LETZTE VERKÄUFE — Verlauf öffnen/schließen -->
+        <button class="btn-history" (click)="toggleSales()">
+          {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
+        </button>
+
+      </div>
+    </aside>
+  </div>
+
+  <!-- ─────────────────────────────────────────
+     VERKAUFSVERLAUF
+     Nur Verkäufe der aktuellen Kassenschicht
+  ───────────────────────────────────────── -->
+  @if (showSales) {
+    <section class="sales-section">
+
+      <!-- Kopfzeile mit Schließen-Button -->
+      <div class="sales-header">
+        <h2 class="sales-title">Letzte Verkäufe</h2>
+        <button class="btn-close-history" (click)="toggleSales()">✕ Schließen</button>
+      </div>
+
+      @if (orders.length === 0) {
+        <p class="muted">Noch keine Verkäufe in dieser Kassenschicht.</p>
+      } @else {
+
+        <!-- Liste der Verkäufe -->
+        <ul class="sales-list">
+          @for (o of orders; track o.id) {
+            <li>
+
+              <!-- Zeile je Verkauf — antippen zum Erweitern -->
+              <div class="sale-row" (click)="toggleOrderDetails(o.id)">
+                <span class="sale-time">{{ formatDateTime(o.timestamp) }}</span>
+                <span class="sale-items">{{ o.items.length }} Artikel</span>
+                <strong class="sale-total">{{ formatEUR(o.totalCents) }}</strong>
+                <span class="chevron">{{ expandedOrderId === o.id ? '▲' : '▼' }}</span>
+              </div>
+
+              <!-- Detailansicht des Verkaufs -->
+              @if (expandedOrderId === o.id) {
+                <div class="sale-details">
+                  @for (g of summarizeItems(o.items); track $index) {
+                    <div class="detail-row">
+                      <span>{{ g.qty }} × {{ g.name }}</span>
+                      <span>{{ formatEUR(g.lineTotalCents) }}</span>
+                    </div>
+                  }
+                </div>
+              }
+
             </li>
           }
-        }
-      </ul>
-    }
-  </section>
+        </ul>
+
+      }
+    </section>
+  }
+
 }

@@ -1,3 +1,7 @@
+<!-- ─────────────────────────────────────────
+   BANNER DE ACTUALIZACIÓN
+   Aparece cuando hay una nueva versión PWA
+───────────────────────────────────────── -->
 @if (updateAvailable) {
   <div style="
     position: fixed;
@@ -17,7 +21,6 @@
     backdrop-filter: blur(10px);
   ">
     <span>Neue Version verfügbar.</span>
-
     <div style="display:flex; gap:10px;">
       <button class="checkoutBtn" (click)="reloadToUpdate()">Aktualisieren</button>
       <button class="clearBtn" (click)="dismissUpdate()">Später</button>
@@ -25,18 +28,9 @@
   </div>
 }
 
-<div class="container">
-  <header class="header">
-    <div>
-      <h1>POS Show</h1>
-      <p class="muted">Offline • Schnellverkauf</p>
-    </div>
-
-    <div class="checkoutActions" style="flex-direction: row; gap: 10px; min-width: auto;">
-      <a class="clearBtn" routerLink="/pos">POS</a>
-      <a class="clearBtn" routerLink="/admin">Admin</a>
-    </div>
-  </header>
-
-  <router-outlet></router-outlet>
-</div>
+<!-- ─────────────────────────────────────────
+   ROUTER OUTLET
+   Aquí se carga el componente activo
+   (POS, Admin, etc.) sin header global
+───────────────────────────────────────── -->
+<router-outlet></router-outlet>

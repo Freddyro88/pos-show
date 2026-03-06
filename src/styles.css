@@ -1,104 +1,668 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Mono:wght@500&display=swap');
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  background: #0f1115;
-  color: #f5f7ff;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: #0a0b0e;
+  color: #eef0f7;
+  height: 100dvh;
+  overflow: hidden;
 }
 
-.container {
-  padding: 16px;
-  max-width: 900px;
-  margin: 0 auto;
+/* Activa scroll solo en la pantalla de resumen de turno */
+body:has(.summary-screen) {
+  overflow: auto;
 }
 
-.header {
+/* ─────────────────────────────────────────
+   LAYOUT PRINCIPAL (izquierda + derecha)
+───────────────────────────────────────── */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  height: 100dvh;
+  gap: 0;
+}
+
+/* ─────────────────────────────────────────
+   PANEL IZQUIERDO — Productos
+───────────────────────────────────────── */
+.products-panel {
   display: flex;
+  flex-direction: column;
+  padding: 20px;
+  overflow-y: auto;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+
+/* Cabecera: "POS Show" + "● Offline" */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+/* Nombre de la app arriba izquierda */
+.brand {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+/* Punto verde "● Offline" arriba derecha */
+.status-dot {
+  font-size: 12px;
+  color: #4ade80;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Grid de botones de productos — 2 columnas */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+/* ─── BOTONES DE PRODUCTOS ─── */
+.product-btn {
+  display: flex;
+  flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  padding: 22px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  min-height: 110px;
+  transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  user-select: none;
+}
+
+.product-btn:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* Efecto verde al tocar el producto */
+.product-btn:active {
+  transform: scale(0.97);
+  background: rgba(74, 222, 128, 0.12);
+  border-color: rgba(74, 222, 128, 0.4);
+}
+
+/* Nombre del producto ej: "Coca-Cola" */
+.product-name {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+/* Precio del producto ej: "€ 3,00" en verde */
+.product-price {
+  font-family: 'DM Mono', monospace;
+  font-size: 17px;
+  color: #4ade80;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+/* ─────────────────────────────────────────
+   PANEL DERECHO — Caja / Checkout
+───────────────────────────────────────── */
+.checkout-panel {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 20px;
+  background: #0f1014;
+}
+
+/* Caja grande del total */
+.total-section {
+  padding: 20px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+/* Texto "GESAMT" encima del número */
+.total-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.5;
+  margin-bottom: 6px;
+}
+
+/* Número grande del total ej: "€ 21,00" */
+.total-amount {
+  font-family: 'DM Mono', monospace;
+  font-size: 44px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.3);
+  transition: color 0.2s;
+  letter-spacing: -1px;
+}
+
+/* Total se pone blanco cuando hay artículos */
+.total-amount.has-items {
+  color: #fff;
+}
+
+.item-count {
+  margin-top: 8px;
+  min-height: 24px;
+}
+
+/* Badge verde "X Artikel" */
+.badge {
+  display: inline-block;
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  border-radius: 99px;
+  padding: 2px 12px;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .muted {
-  opacity: 0.7;
+  opacity: 0.4;
+  font-size: 13px;
 }
 
-.total {
-  text-align: right;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.12);
+/* Lista de artículos en la venta actual */
+.current-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* Fila de cada artículo con cantidad, nombre, precio y botón ✕ */
+.current-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  padding: 6px 8px;
+  border-radius: 10px;
   background: rgba(255,255,255,0.04);
 }
 
-.totalValue {
-  font-size: 28px;
-  font-weight: 800;
+/* Cantidad ej: "2×" en verde */
+.item-qty {
+  font-family: 'DM Mono', monospace;
+  color: #4ade80;
+  font-size: 13px;
+  min-width: 28px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+.item-name { flex: 1; font-weight: 500; }
+.item-total { font-family: 'DM Mono', monospace; font-size: 13px; opacity: 0.7; }
+
+/* Espacio entre lista de artículos y botones */
+.spacer { flex: 0; min-height: 12px; }
+
+/* ─────────────────────────────────────────
+   BOTONES DE ACCIÓN
+───────────────────────────────────────── */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.productBtn {
-  padding: 18px 16px;
+/* ─── BOTÓN KASSIEREN — verde grande ─── */
+.btn-kassieren {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 22px;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
+  border: none;
+  background: #4ade80;
+  color: #0a0b0e;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
   cursor: pointer;
-  text-align: left;
-  color: inherit;
+  transition: background 0.15s, transform 0.1s;
+  user-select: none;
 }
 
-.productBtn:active {
-  transform: scale(0.99);
+.btn-kassieren:hover { background: #6ee7a0; }
+.btn-kassieren:active { transform: scale(0.98); background: #22c55e; }
+
+/* Kassieren gris cuando no hay artículos */
+.btn-kassieren:disabled {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.2);
+  cursor: not-allowed;
 }
 
-.pName {
-  font-size: 22px;
-  font-weight: 800;
+.btn-icon { font-size: 22px; }
+
+/* Fila con STORNO y LEEREN lado a lado */
+.btn-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-.pPrice {
-  margin-top: 6px;
-  font-size: 18px;
-  opacity: 0.85;
+/* ─── BOTÓN STORNO y LEEREN — grises ─── */
+.btn-secondary {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  user-select: none;
 }
 
-.sales {
-  margin-top: 18px;
+.btn-secondary:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-secondary:active { transform: scale(0.97); }
+.btn-secondary:disabled { opacity: 0.25; cursor: not-allowed; }
+
+/* LEEREN se pone rojo al hacer hover */
+.btn-danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
 }
 
-.salesList {
-  list-style: none;
-  padding: 0;
+/* ─── BOTÓN LETZTE VERKÄUFE — historial ─── */
+.btn-history {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: transparent;
+  color: rgba(255,255,255,0.4);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.btn-history:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.15); }
+
+/* ─────────────────────────────────────────
+   HISTORIAL DE VENTAS
+   Panel que sube desde abajo
+───────────────────────────────────────── */
+.sales-section {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 50vh;
+  background: #13151a;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding: 20px;
+  overflow-y: auto;
+  z-index: 100;
+  animation: slideUp 0.25s ease;
+}
+
+/* Animación de entrada del historial */
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* Cabecera del historial con botón cerrar */
+.sales-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sales-title {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.5;
   margin: 0;
 }
 
-.saleRow {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+/* Botón ✕ Schließen del historial */
+.btn-close-history {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.detailRow {
+.btn-close-history:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+.sales-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Fila de cada venta en el historial */
+.sale-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.sale-row:hover { background: rgba(255,255,255,0.05); }
+
+/* Hora ej: "18:32 • 05.03.2026" */
+.sale-time { font-size: 13px; opacity: 0.5; min-width: 120px; }
+.sale-items { font-size: 13px; opacity: 0.6; flex: 1; }
+.sale-total { font-family: 'DM Mono', monospace; font-size: 16px; color: #fff; }
+.chevron { font-size: 11px; opacity: 0.4; }
+
+/* Detalle expandido de una venta */
+.sale-details {
+  padding: 8px 14px 14px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.detail-row:last-child { border-bottom: none; }
+.detail-row span:last-child { font-family: 'DM Mono', monospace; font-weight: 500; opacity: 0.8; }
+
+/* ─── BOTÓN ✕ para borrar artículo individual ─── */
+.btn-remove-item {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.btn-remove-item:hover { color: #f87171; background: rgba(248, 113, 113, 0.12); }
+
+/* ─────────────────────────────────────────
+   PANTALLA TURNO CERRADO
+   Aparece al iniciar sin turno activo
+───────────────────────────────────────── */
+.shift-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100dvh;
+  background: #0a0b0e;
+}
+
+.shift-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.shift-icon { font-size: 56px; }
+.shift-title { font-size: 36px; font-weight: 900; margin: 0; letter-spacing: -1px; }
+.shift-subtitle { font-size: 16px; opacity: 0.4; margin: 0; }
+
+/* Botón verde grande para abrir turno */
+.btn-open-shift {
+  margin-top: 12px;
+  padding: 20px 48px;
+  border-radius: 18px;
+  border: none;
+  background: #4ade80;
+  color: #0a0b0e;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-open-shift:hover { background: #6ee7a0; }
+.btn-open-shift:active { transform: scale(0.97); }
+
+/* ─────────────────────────────────────────
+   BARRA INFO TURNO ACTIVO
+   Barra verde arriba del panel derecho
+───────────────────────────────────────── */
+.shift-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+}
+
+/* Texto "● Turno offen seit..." en verde */
+.shift-label { font-size: 12px; color: #4ade80; font-weight: 500; }
+
+/* Botón rojo para cerrar turno */
+.btn-close-shift {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-close-shift:hover { background: rgba(248, 113, 113, 0.2); }
+
+/* ─────────────────────────────────────────
+   PANTALLA RESUMEN DE TURNO
+   Aparece al cerrar el turno
+───────────────────────────────────────── */
+.summary-screen {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 100dvh;
+  background: #0a0b0e;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.summary-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+  padding: 20px 0 40px;
+}
+
+.summary-icon { font-size: 48px; }
+.summary-title { font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
+
+/* Horario apertura → cierre */
+.summary-time {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 0;
+  font-size: 13px;
+  opacity: 0.5;
 }
 
-.detailRow span:first-child {
-  flex: 1;              /* el texto ocupa el espacio */
+.time-arrow { opacity: 0.4; }
+
+/* Estadísticas: total vendido y número de ventas */
+.summary-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
 }
 
-.detailRow span:last-child {
+.stat-box {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 6px;
+}
+
+.stat-value { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; }
+
+/* Total en verde */
+.stat-value.green { color: #4ade80; }
+
+/* Tabla de productos vendidos en el turno */
+.summary-products {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+.summary-products-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.summary-product-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 14px;
+}
+
+.summary-product-row:last-child { border-bottom: none; }
+.sp-qty { font-family: 'DM Mono', monospace; color: #4ade80; min-width: 32px; text-align: left; }
+.sp-name { flex: 1; text-align: left; font-weight: 500; }
+.sp-total { font-family: 'DM Mono', monospace; opacity: 0.7; }
+
+/* ─── BOTONES CSV + PDF + NUEVO TURNO en una fila ─── */
+.summary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Botón CSV */
+.btn-export-csv {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
   font-weight: 700;
-  white-space: nowrap;  /* evita saltos raros */
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.detailRow:not(:last-child) {
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+
+.btn-export-csv:hover { background: rgba(255,255,255,0.1); }
+
+/* Botón PDF */
+.btn-export-pdf {
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.08);
+  color: #4ade80;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
 }
+
+.btn-export-pdf:hover { background: rgba(74, 222, 128, 0.15); }
+
+/* Botón nuevo turno — verde sólido */
+.btn-new-shift {
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: #4ade80;
+  color: #0a0b0e;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-new-shift:hover { background: #6ee7a0; }
+.btn-new-shift:active { transform: scale(0.98); }
+
+/* ─── Scrollbar fina y discreta ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
