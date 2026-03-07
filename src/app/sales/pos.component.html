@@ -189,3 +189,14 @@
   }
 
 }
+
+<!-- ─── PIN MODAL ──────────────────────────────────────────────────────────── -->
+<!-- Füge diesen Block in dein pos.component.html ein, direkt vor dem letzten </div> -->
+
+<app-pin-modal
+  *ngIf="showPinModal"
+  [mode]="pinModalMode"
+  [actionLabel]="pinActionLabel"
+  (success)="onPinSuccess()"
+  (dismissed)="onPinDismissed()"
+/>
