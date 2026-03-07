@@ -5,6 +5,7 @@ import { ProductService } from '../products/product.service';
 import { OrdersDbService, StoredOrder } from '../core/orders-db.service';
 import { ShiftsDbService, Shift } from '../core/shifts-db.service';
 import { ShiftSummaryComponent } from './shift-summary.component';
+import { PaymentModalComponent } from './payment-modal.component';
 
 // ─── MODELO DE ORDEN ───────────────────────────────
 type Order = {
@@ -18,25 +19,27 @@ type Order = {
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, ShiftSummaryComponent],
+  imports: [CommonModule, ShiftSummaryComponent, PaymentModalComponent],
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {
 
-  // ─── DATOS ─────────────────────────────────────────
+  // ─── DATEN ─────────────────────────────────────────
   products: Product[] = [];
   currentOrder: Product[] = [];
   expandedOrderId: string | null = null;
   showSales = false;
 
-  // ─── ÓRDENES — solo del turno activo ───────────────
+  // ─── MODAL ZAHLUNG ─────────────────────────────────
+  showPaymentModal = false;
+
+  // ─── BESTELLUNGEN — nur aktuelle Kassenschicht ─────
   orders: Order[] = [];
 
-  // ─── KASSENSCHICHT ACTIVA ──────────────────────────
-  // null = no hay Kassenschicht abierta
+  // ─── AKTIVE KASSENSCHICHT ──────────────────────────
   activeShift: Shift | null = null;
 
-  // ─── KASSENSCHICHT CERRADA — muestra resumen ───────
+  // ─── GESCHLOSSENE KASSENSCHICHT — zeigt Zusammenfassung
   closedShift: Shift | null = null;
   closedShiftOrders: StoredOrder[] = [];
 
@@ -50,21 +53,17 @@ export class PosComponent implements OnInit {
     this.products = this.productService.getAll();
   }
 
-  // ─── INIT — carga Kassenschicht activa ─────────────
+  // ─── INIT — lädt aktive Kassenschicht ──────────────
   async ngOnInit() {
-    // Comprueba si hay una Kassenschicht abierta
     this.activeShift = await this.shiftsDb.getActiveShift();
-
     if (this.activeShift) {
-      // Carga solo las órdenes de la Kassenschicht activa
       await this.loadOrdersForShift(this.activeShift.id);
     }
-
     this.cdr.detectChanges();
     console.log('🕐 Kassenschicht aktiv:', this.activeShift);
   }
 
-  // ─── CARGA ÓRDENES DE UNA KASSENSCHICHT ────────────
+  // ─── BESTELLUNGEN EINER KASSENSCHICHT LADEN ────────
   private async loadOrdersForShift(shiftId: string) {
     const all = await this.ordersDb.getAllOrders();
     this.orders = all
@@ -72,7 +71,7 @@ export class PosComponent implements OnInit {
       .sort((a, b) => b.timestamp - a.timestamp) as unknown as Order[];
   }
 
-  // ─── KASSENSCHICHT — abrir ─────────────────────────
+  // ─── KASSENSCHICHT — öffnen ────────────────────────
   async openShift() {
     const shift: Shift = {
       id: crypto.randomUUID(),
@@ -85,36 +84,33 @@ export class PosComponent implements OnInit {
     this.activeShift = shift;
     this.closedShift = null;
     this.closedShiftOrders = [];
-    this.orders = []; // limpia órdenes anteriores
+    this.orders = [];
     this.cdr.detectChanges();
     console.log('✅ Kassenschicht geöffnet:', shift.id);
   }
 
-  // ─── KASSENSCHICHT — cerrar ────────────────────────
+  // ─── KASSENSCHICHT — schließen ─────────────────────
   async closeShift() {
     if (!this.activeShift) return;
     this.activeShift.closedAt = Date.now();
     await this.shiftsDb.saveShift(this.activeShift);
-
-    // Recoge las órdenes de esta Kassenschicht para el resumen
     const allOrders = await this.ordersDb.getAllOrders();
     this.closedShiftOrders = allOrders.filter(
       o => (o as any).shiftId === this.activeShift!.id
     );
-
     this.closedShift = this.activeShift;
     this.activeShift = null;
     this.cdr.detectChanges();
     console.log('🔒 Kassenschicht geschlossen');
   }
 
-  // ─── HISTORIAL — mostrar / ocultar ─────────────────
+  // ─── VERLAUF — ein/ausblenden ──────────────────────
   toggleSales() {
     this.showSales = !this.showSales;
     this.expandedOrderId = null;
   }
 
-  // ─── PRODUKTE — zum aktuellen Verkauf hinzufügen ───
+  // ─── PRODUKTE — zum Verkauf hinzufügen ─────────────
   addItem(product: Product) {
     if (!this.activeShift) return;
     this.currentOrder = [...this.currentOrder, product];
@@ -141,10 +137,18 @@ export class PosComponent implements OnInit {
     this.currentOrder = [];
   }
 
-  // ─── KASSIEREN — Verkauf speichern ─────────────────
-  async checkout() {
+  // ─── KASSIEREN — öffnet Zahlungsmodal ──────────────
+  checkout() {
     if (this.currentOrder.length === 0) return;
     if (!this.activeShift) return;
+    this.showPaymentModal = true;
+    this.cdr.detectChanges();
+  }
+
+  // ─── ZAHLUNG BESTÄTIGT — Verkauf speichern ─────────
+  async confirmPayment() {
+    if (!this.activeShift) return;
+    this.showPaymentModal = false;
 
     this.bumpUsageFromCurrentOrder();
 
@@ -158,7 +162,6 @@ export class PosComponent implements OnInit {
       shiftId: this.activeShift.id,
     };
 
-    // Speichert in IndexedDB
     try {
       await this.ordersDb.addOrder(order);
       console.log('✅ gespeichert in IndexedDB', order.id);
@@ -166,7 +169,6 @@ export class PosComponent implements OnInit {
       console.error('❌ IndexedDB Fehler', e);
     }
 
-    // Kassenschicht aktualisieren
     this.activeShift.orderIds.push(order.id);
     this.activeShift.totalCents += totalCents;
     await this.shiftsDb.saveShift(this.activeShift);
@@ -174,7 +176,13 @@ export class PosComponent implements OnInit {
     this.orders = [order, ...this.orders];
     this.clearOrder();
     this.products = this.productService.getAll();
-    this.cdr.detectChanges(); // ← fuerza actualización con un solo toque
+    this.cdr.detectChanges();
+  }
+
+  // ─── ZAHLUNG ABGEBROCHEN — Modal schließen ─────────
+  cancelPayment() {
+    this.showPaymentModal = false;
+    this.cdr.detectChanges();
   }
 
   // ─── PRODUKTNUTZUNG — interner Zähler ──────────────

@@ -33,6 +33,18 @@
 ───────────────────────────────────────── -->
 } @else {
 
+  <!-- ─────────────────────────────────────────
+     MODAL ZAHLUNG / WECHSELGELD
+     Erscheint nach dem Tippen von KASSIEREN
+  ───────────────────────────────────────── -->
+  @if (showPaymentModal) {
+    <app-payment-modal
+      [totalCents]="currentTotalCents"
+      (confirmed)="confirmPayment()"
+      (cancelled)="cancelPayment()">
+    </app-payment-modal>
+  }
+
   <!-- Layout principal dos columnas -->
   <div class="pos-layout">
 
