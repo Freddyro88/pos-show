@@ -1,6 +1,15 @@
+<!-- ─── PIN MODAL ─────────────────────────────────────────────────────────── -->
+@if (showPinModal) {
+  <app-pin-modal
+    [mode]="pinModalMode"
+    [actionLabel]="pinActionLabel"
+    (success)="onPinSuccess()"
+    (dismissed)="onPinDismissed()">
+  </app-pin-modal>
+}
+
 <!-- ─────────────────────────────────────────
    RESUMEN DE KASSENSCHICHT CERRADA
-   Aparece después de cerrar la Kassenschicht
 ───────────────────────────────────────── -->
 @if (closedShift) {
 
@@ -12,7 +21,6 @@
 
 <!-- ─────────────────────────────────────────
    PANTALLA SIN KASSENSCHICHT ACTIVA
-   Aparece al iniciar sin Kassenschicht
 ───────────────────────────────────────── -->
 } @else if (!activeShift) {
 
@@ -21,7 +29,6 @@
       <div class="shift-icon">🏪</div>
       <h1 class="shift-title">POS Show</h1>
       <p class="shift-subtitle">Keine offene Kassenschicht</p>
-      <!-- Botón verde para abrir Kassenschicht -->
       <button class="btn-open-shift" (click)="openShift()">
         ▶ Kassenschicht öffnen
       </button>
@@ -29,14 +36,10 @@
   </div>
 
 <!-- ─────────────────────────────────────────
-   POS ACTIVO — solo con Kassenschicht abierta
+   POS ACTIVO
 ───────────────────────────────────────── -->
 } @else {
 
-  <!-- ─────────────────────────────────────────
-     MODAL ZAHLUNG / WECHSELGELD
-     Erscheint nach dem Tippen von KASSIEREN
-  ───────────────────────────────────────── -->
   @if (showPaymentModal) {
     <app-payment-modal
       [totalCents]="currentTotalCents"
@@ -45,7 +48,6 @@
     </app-payment-modal>
   }
 
-  <!-- Layout principal dos columnas -->
   <div class="pos-layout">
 
     <!-- ─── PANEL IZQUIERDO — Produkte ─── -->
@@ -54,8 +56,6 @@
         <span class="brand">POS Show</span>
         <span class="status-dot">● Offline</span>
       </div>
-
-      <!-- Grid de botones de productos -->
       <div class="products-grid">
         @for (p of products; track p.id) {
           <button class="product-btn" (click)="addItem(p)">
@@ -66,16 +66,14 @@
       </div>
     </section>
 
-    <!-- ─── PANEL DERECHO — Kasse / Checkout ─── -->
+    <!-- ─── PANEL DERECHO — Checkout ─── -->
     <aside class="checkout-panel">
 
-      <!-- Barra verde con info de Kassenschicht y botón cerrar -->
       <div class="shift-info">
         <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
         <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
       </div>
 
-      <!-- Gesamtbetrag groß -->
       <div class="total-section">
         <div class="total-label">Gesamt</div>
         <div class="total-amount" [class.has-items]="currentOrder.length > 0">
@@ -90,7 +88,6 @@
         </div>
       </div>
 
-      <!-- Liste der Artikel mit ✕ zum Löschen -->
       @if (currentOrder.length > 0) {
         <div class="current-items">
           @for (g of summarizeItems(currentOrder); track $index) {
@@ -98,77 +95,53 @@
               <span class="item-qty">{{ g.qty }}×</span>
               <span class="item-name">{{ g.name }}</span>
               <span class="item-total">{{ formatEUR(g.lineTotalCents) }}</span>
-              <!-- ✕ löscht eine Einheit des Produkts -->
               <button class="btn-remove-item" (click)="removeItem(g.id)">✕</button>
             </div>
           }
         </div>
       }
 
-      <!-- Abstand zwischen Liste und Buttons -->
       <div class="spacer"></div>
 
-      <!-- ─── Aktionsbuttons ─── -->
       <div class="actions">
-
-        <!-- KASSIEREN — Verkauf bestätigen -->
         <button class="btn-kassieren" (click)="checkout()" [disabled]="currentOrder.length === 0">
           <span class="btn-icon">✓</span>
           KASSIEREN
         </button>
-
-        <!-- STORNO + LEEREN nebeneinander -->
         <div class="btn-row">
-          <!-- STORNO — letzten Artikel entfernen -->
           <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
             ↩ STORNO
           </button>
-          <!-- LEEREN — aktuellen Verkauf leeren -->
           <button class="btn-secondary btn-danger" (click)="clearOrder()" [disabled]="currentOrder.length === 0">
             ✕ LEEREN
           </button>
         </div>
-
-        <!-- LETZTE VERKÄUFE — Verlauf öffnen/schließen -->
         <button class="btn-history" (click)="toggleSales()">
           {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
         </button>
-
       </div>
+
     </aside>
   </div>
 
-  <!-- ─────────────────────────────────────────
-     VERKAUFSVERLAUF
-     Nur Verkäufe der aktuellen Kassenschicht
-  ───────────────────────────────────────── -->
   @if (showSales) {
     <section class="sales-section">
-
-      <!-- Kopfzeile mit Schließen-Button -->
       <div class="sales-header">
         <h2 class="sales-title">Letzte Verkäufe</h2>
         <button class="btn-close-history" (click)="toggleSales()">✕ Schließen</button>
       </div>
-
       @if (orders.length === 0) {
         <p class="muted">Noch keine Verkäufe in dieser Kassenschicht.</p>
       } @else {
-
-        <!-- Liste der Verkäufe -->
         <ul class="sales-list">
           @for (o of orders; track o.id) {
             <li>
-
-              <!-- Zeile je Verkauf — antippen zum Erweitern -->
               <div class="sale-row" (click)="toggleOrderDetails(o.id)">
                 <span class="sale-time">{{ formatDateTime(o.timestamp) }}</span>
                 <span class="sale-items">{{ o.items.length }} Artikel</span>
                 <strong class="sale-total">{{ formatEUR(o.totalCents) }}</strong>
                 <span class="chevron">{{ expandedOrderId === o.id ? '▲' : '▼' }}</span>
               </div>
-
-              <!-- Detailansicht des Verkaufs -->
               @if (expandedOrderId === o.id) {
                 <div class="sale-details">
                   @for (g of summarizeItems(o.items); track $index) {
@@ -179,24 +152,11 @@
                   }
                 </div>
               }
-
             </li>
           }
         </ul>
-
       }
     </section>
   }
 
 }
-
-<!-- ─── PIN MODAL ──────────────────────────────────────────────────────────── -->
-<!-- Füge diesen Block in dein pos.component.html ein, direkt vor dem letzten </div> -->
-
-<app-pin-modal
-  *ngIf="showPinModal"
-  [mode]="pinModalMode"
-  [actionLabel]="pinActionLabel"
-  (success)="onPinSuccess()"
-  (dismissed)="onPinDismissed()"
-/>
