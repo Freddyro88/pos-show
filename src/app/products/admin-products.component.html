@@ -163,7 +163,7 @@
             <!-- Right column -->
             <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
               <input
-                [ngModel]="priceInputById[''+p.id] ?? ((p.priceCents ?? 0) / 100).toFixed(2).replace('.', ',')"
+                [ngModel]="priceInputById[''+p.id] || ((p.priceCents || 0) / 100).toFixed(2).replace('.', ',')"
                 (ngModelChange)="onPriceInput(p, $event)"
                 (blur)="onPriceBlur(p); validateProduct(p)"
                 inputmode="decimal"
@@ -177,7 +177,7 @@
                 </div>
               }
 
-              <strong>{{ formatEUR(p.priceCents ?? 0) }}</strong>
+              <strong>{{ formatEUR(p.priceCents || 0) }}</strong>
 
               <div style="display:flex; gap:10px; align-items:center;">
                 <button
