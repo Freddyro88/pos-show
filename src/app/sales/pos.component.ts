@@ -4,10 +4,12 @@ import { Product } from '../products/product.model';
 import { ProductService } from '../products/product.service';
 import { OrdersDbService, StoredOrder } from '../core/orders-db.service';
 import { ShiftsDbService, Shift } from '../core/shifts-db.service';
+import { PinService } from '../core/pin.service';
 import { ShiftSummaryComponent } from './shift-summary.component';
 import { PaymentModalComponent } from './payment-modal.component';
+import { PinModalComponent } from '../shared/pin-modal.component';
 
-// ─── MODELO DE ORDEN ───────────────────────────────
+// ─── TYPEN ─────────────────────────────────────────
 type Order = {
   id: string;
   items: Product[];
@@ -16,10 +18,13 @@ type Order = {
   shiftId?: string;
 };
 
+// Welche PIN-Aktion wird gerade ausgeführt?
+type PinAction = 'open-shift' | 'close-shift' | 'set-pin' | null;
+
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, ShiftSummaryComponent, PaymentModalComponent],
+  imports: [CommonModule, ShiftSummaryComponent, PaymentModalComponent, PinModalComponent],
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {
@@ -39,31 +44,37 @@ export class PosComponent implements OnInit {
   // ─── AKTIVE KASSENSCHICHT ──────────────────────────
   activeShift: Shift | null = null;
 
-  // ─── GESCHLOSSENE KASSENSCHICHT — zeigt Zusammenfassung
+  // ─── GESCHLOSSENE KASSENSCHICHT ────────────────────
   closedShift: Shift | null = null;
   closedShiftOrders: StoredOrder[] = [];
+
+  // ─── PIN MODAL ────────────────────────────────────
+  showPinModal = false;
+  pinModalMode: 'verify' | 'set' = 'verify';
+  pinActionLabel = '';
+  pendingPinAction: PinAction = null;
 
   // ─── CONSTRUCTOR ───────────────────────────────────
   constructor(
     private productService: ProductService,
     private ordersDb: OrdersDbService,
     private shiftsDb: ShiftsDbService,
+    private pinService: PinService,
     private cdr: ChangeDetectorRef
   ) {
     this.products = this.productService.getAll();
   }
 
-  // ─── INIT — lädt aktive Kassenschicht ──────────────
+  // ─── INIT ──────────────────────────────────────────
   async ngOnInit() {
     this.activeShift = await this.shiftsDb.getActiveShift();
     if (this.activeShift) {
       await this.loadOrdersForShift(this.activeShift.id);
     }
     this.cdr.detectChanges();
-    console.log('🕐 Kassenschicht aktiv:', this.activeShift);
   }
 
-  // ─── BESTELLUNGEN EINER KASSENSCHICHT LADEN ────────
+  // ─── BESTELLUNGEN LADEN ────────────────────────────
   private async loadOrdersForShift(shiftId: string) {
     const all = await this.ordersDb.getAllOrders();
     this.orders = all
@@ -71,8 +82,56 @@ export class PosComponent implements OnInit {
       .sort((a, b) => b.timestamp - a.timestamp) as unknown as Order[];
   }
 
-  // ─── KASSENSCHICHT — öffnen ────────────────────────
+  // ─── PIN MODAL ÖFFNEN ─────────────────────────────
+  private async requestPin(action: PinAction, label: string) {
+    const hasPin = await this.pinService.hasPin();
+
+    if (!hasPin) {
+      // Kein PIN gesetzt → erst PIN festlegen
+      this.pendingPinAction = action;
+      this.pinModalMode = 'set';
+      this.pinActionLabel = 'PIN festlegen';
+      this.showPinModal = true;
+    } else {
+      // PIN vorhanden → verifizieren
+      this.pendingPinAction = action;
+      this.pinModalMode = 'verify';
+      this.pinActionLabel = label;
+      this.showPinModal = true;
+    }
+    this.cdr.detectChanges();
+  }
+
+  // ─── PIN ERFOLG ───────────────────────────────────
+  async onPinSuccess() {
+    this.showPinModal = false;
+    const action = this.pendingPinAction;
+    this.pendingPinAction = null;
+    this.cdr.detectChanges();
+
+    if (action === 'open-shift') await this._doOpenShift();
+    else if (action === 'close-shift') await this._doCloseShift();
+  }
+
+  // ─── PIN ABGEBROCHEN ──────────────────────────────
+  onPinDismissed() {
+    this.showPinModal = false;
+    this.pendingPinAction = null;
+    this.cdr.detectChanges();
+  }
+
+  // ─── KASSENSCHICHT — öffnen (mit PIN) ─────────────
   async openShift() {
+    await this.requestPin('open-shift', 'Kassenschicht öffnen');
+  }
+
+  // ─── KASSENSCHICHT — schließen (mit PIN) ──────────
+  async closeShift() {
+    await this.requestPin('close-shift', 'Kassenschicht schließen');
+  }
+
+  // ─── INTERNE LOGIK — Schicht öffnen ───────────────
+  private async _doOpenShift() {
     const shift: Shift = {
       id: crypto.randomUUID(),
       openedAt: Date.now(),
@@ -86,11 +145,10 @@ export class PosComponent implements OnInit {
     this.closedShiftOrders = [];
     this.orders = [];
     this.cdr.detectChanges();
-    console.log('✅ Kassenschicht geöffnet:', shift.id);
   }
 
-  // ─── KASSENSCHICHT — schließen ─────────────────────
-  async closeShift() {
+  // ─── INTERNE LOGIK — Schicht schließen ────────────
+  private async _doCloseShift() {
     if (!this.activeShift) return;
     this.activeShift.closedAt = Date.now();
     await this.shiftsDb.saveShift(this.activeShift);
@@ -101,43 +159,39 @@ export class PosComponent implements OnInit {
     this.closedShift = this.activeShift;
     this.activeShift = null;
     this.cdr.detectChanges();
-    console.log('🔒 Kassenschicht geschlossen');
   }
 
-  // ─── VERLAUF — ein/ausblenden ──────────────────────
+  // ─── VERLAUF ──────────────────────────────────────
   toggleSales() {
     this.showSales = !this.showSales;
     this.expandedOrderId = null;
   }
 
-  // ─── PRODUKTE — zum Verkauf hinzufügen ─────────────
+  // ─── PRODUKTE ─────────────────────────────────────
   addItem(product: Product) {
     if (!this.activeShift) return;
     this.currentOrder = [...this.currentOrder, product];
   }
 
-  // ─── STORNO — letzten Artikel entfernen ────────────
   undoLastItem() {
     if (this.currentOrder.length === 0) return;
     this.currentOrder = this.currentOrder.slice(0, -1);
   }
 
-  // ─── EINZELNEN ARTIKEL LÖSCHEN ─────────────────────
   removeItem(productId: string) {
     const index = this.currentOrder.map(p => p.id).lastIndexOf(productId);
     if (index === -1) return;
     this.currentOrder = [
       ...this.currentOrder.slice(0, index),
-      ...this.currentOrder.slice(index + 1)
+      ...this.currentOrder.slice(index + 1),
     ];
   }
 
-  // ─── LEEREN — aktuellen Verkauf leeren ─────────────
   clearOrder() {
     this.currentOrder = [];
   }
 
-  // ─── KASSIEREN — öffnet Zahlungsmodal ──────────────
+  // ─── KASSIEREN ────────────────────────────────────
   checkout() {
     if (this.currentOrder.length === 0) return;
     if (!this.activeShift) return;
@@ -145,15 +199,12 @@ export class PosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── ZAHLUNG BESTÄTIGT — Verkauf speichern ─────────
   async confirmPayment() {
     if (!this.activeShift) return;
     this.showPaymentModal = false;
-
     this.bumpUsageFromCurrentOrder();
 
     const totalCents = this.currentOrder.reduce((sum, p) => sum + p.priceCents, 0);
-
     const order: Order = {
       id: crypto.randomUUID(),
       items: this.currentOrder,
@@ -164,7 +215,6 @@ export class PosComponent implements OnInit {
 
     try {
       await this.ordersDb.addOrder(order);
-      console.log('✅ gespeichert in IndexedDB', order.id);
     } catch (e) {
       console.error('❌ IndexedDB Fehler', e);
     }
@@ -179,13 +229,11 @@ export class PosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── ZAHLUNG ABGEBROCHEN — Modal schließen ─────────
   cancelPayment() {
     this.showPaymentModal = false;
     this.cdr.detectChanges();
   }
 
-  // ─── PRODUKTNUTZUNG — interner Zähler ──────────────
   private bumpUsageFromCurrentOrder() {
     const counts = new Map<string, number>();
     for (const p of this.currentOrder) {
@@ -196,17 +244,15 @@ export class PosComponent implements OnInit {
     }
   }
 
-  // ─── VERLAUF — Details ein/ausblenden ──────────────
   toggleOrderDetails(orderId: string) {
     this.expandedOrderId = this.expandedOrderId === orderId ? null : orderId;
   }
 
-  // ─── GESAMTBETRAG des aktuellen Verkaufs ───────────
+  // ─── HELPERS ──────────────────────────────────────
   get currentTotalCents(): number {
     return this.currentOrder.reduce((sum, p) => sum + p.priceCents, 0);
   }
 
-  // ─── ARTIKEL GRUPPIEREN — z.B. 2× Bier ────────────
   summarizeItems(items: Product[]) {
     const map = new Map<string, { id: string; name: string; qty: number; lineTotalCents: number }>();
     for (const item of items) {
@@ -221,7 +267,6 @@ export class PosComponent implements OnInit {
     return Array.from(map.values());
   }
 
-  // ─── DATUM FORMATIEREN — z.B. "18:32 • 05.03.2026" ─
   formatDateTime(timestamp: number): string {
     const d = new Date(timestamp);
     const time = d.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
@@ -229,7 +274,6 @@ export class PosComponent implements OnInit {
     return `${time} • ${date}`;
   }
 
-  // ─── BETRAG FORMATIEREN — z.B. "€ 3,00" ───────────
   formatEUR(cents: number): string {
     return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
   }
