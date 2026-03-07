@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;900&family=DM+Mono:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
 * {
   box-sizing: border-box;
@@ -7,11 +7,13 @@
 
 body {
   margin: 0;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  background: #0a0b0e;
-  color: #eef0f7;
+  font-family: -apple-system, 'Inter', BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  background: #2c2c30;
+  color: #f0f0f2;
   height: 100dvh;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Activa scroll solo en la pantalla de resumen de turno */
@@ -20,7 +22,7 @@ body:has(.summary-screen) {
 }
 
 /* ─────────────────────────────────────────
-   LAYOUT PRINCIPAL (izquierda + derecha)
+   LAYOUT PRINCIPAL
 ───────────────────────────────────────── */
 .pos-layout {
   display: grid;
@@ -35,40 +37,41 @@ body:has(.summary-screen) {
 .products-panel {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 24px 20px;
   overflow-y: auto;
-  border-right: 1px solid rgba(255,255,255,0.07);
+  background: #28282c;
+  border-right: 1px solid rgba(180,190,220,0.14);
 }
 
-/* Cabecera: "POS Show" + "● Offline" */
 .panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-/* Nombre de la app arriba izquierda */
 .brand {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   color: #fff;
 }
 
-/* Punto verde "● Offline" arriba derecha */
 .status-dot {
-  font-size: 12px;
-  color: #4ade80;
+  font-size: 11px;
+  color: #3b82f6;
   font-weight: 500;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  padding: 3px 10px;
+  border-radius: 99px;
 }
 
-/* Grid de botones de productos — 2 columnas */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
+  gap: 10px;
 }
 
 /* ─── BOTONES DE PRODUCTOS ─── */
@@ -77,89 +80,85 @@ body:has(.summary-screen) {
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 22px 20px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.05);
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(180,190,220,0.12);
+  background: rgba(255,255,255,0.07);
   cursor: pointer;
   color: inherit;
   text-align: left;
-  min-height: 110px;
+  min-height: 100px;
   transition: background 0.15s, transform 0.1s, border-color 0.15s;
   user-select: none;
+  backdrop-filter: blur(10px);
 }
 
 .product-btn:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.2);
+  background: rgba(59, 130, 246, 0.07);
+  border-color: rgba(59, 130, 246, 0.25);
 }
 
-/* Efecto verde al tocar el producto */
 .product-btn:active {
   transform: scale(0.97);
-  background: rgba(74, 222, 128, 0.12);
-  border-color: rgba(74, 222, 128, 0.4);
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
-/* Nombre del producto ej: "Coca-Cola" */
 .product-name {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.2;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #f0f0f2;
+  letter-spacing: -0.2px;
 }
 
-/* Precio del producto ej: "€ 3,00" en verde */
 .product-price {
-  font-family: 'DM Mono', monospace;
-  font-size: 17px;
-  color: #4ade80;
-  font-weight: 500;
+  font-size: 15px;
+  color: #3b82f6;
+  font-weight: 600;
   margin-top: 8px;
+  letter-spacing: -0.2px;
 }
 
 /* ─────────────────────────────────────────
-   PANEL DERECHO — Caja / Checkout
+   PANEL DERECHO — Checkout
 ───────────────────────────────────────── */
 .checkout-panel {
   display: flex;
   flex-direction: column;
-  padding: 24px 20px;
-  background: #0f1014;
+  padding: 24px 22px;
+  background: #2c2c30;
 }
 
-/* Caja grande del total */
 .total-section {
   padding: 20px;
-  border-radius: 20px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
-  margin-bottom: 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(180,190,220,0.12);
+  margin-bottom: 14px;
   text-align: center;
 }
 
-/* Texto "GESAMT" encima del número */
 .total-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 1.5px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  opacity: 0.5;
+  color: #9a9aaa;
   margin-bottom: 6px;
 }
 
-/* Número grande del total ej: "€ 21,00" */
 .total-amount {
-  font-family: 'DM Mono', monospace;
-  font-size: 44px;
-  font-weight: 500;
-  color: rgba(255,255,255,0.3);
+  font-size: 48px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.35);
   transition: color 0.2s;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
 }
 
-/* Total se pone blanco cuando hay artículos */
 .total-amount.has-items {
   color: #fff;
+  font-weight: 300;
 }
 
 .item-count {
@@ -167,55 +166,53 @@ body:has(.summary-screen) {
   min-height: 24px;
 }
 
-/* Badge verde "X Artikel" */
 .badge {
   display: inline-block;
-  background: rgba(74, 222, 128, 0.15);
-  color: #4ade80;
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.2);
   border-radius: 99px;
   padding: 2px 12px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
+  letter-spacing: 0.2px;
 }
 
 .muted {
-  opacity: 0.4;
+  color: #8a8a9a;
   font-size: 13px;
 }
 
-/* Lista de artículos en la venta actual */
 .current-items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   padding: 4px;
   max-height: 180px;
   overflow-y: auto;
 }
 
-/* Fila de cada artículo con cantidad, nombre, precio y botón ✕ */
 .current-item-row {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  padding: 6px 8px;
+  padding: 7px 10px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(180,190,220,0.09);
 }
 
-/* Cantidad ej: "2×" en verde */
 .item-qty {
-  font-family: 'DM Mono', monospace;
-  color: #4ade80;
+  color: #3b82f6;
   font-size: 13px;
+  font-weight: 600;
   min-width: 28px;
 }
 
-.item-name { flex: 1; font-weight: 500; }
-.item-total { font-family: 'DM Mono', monospace; font-size: 13px; opacity: 0.7; }
+.item-name { flex: 1; font-weight: 500; color: #e0e0ee; }
+.item-total { font-size: 13px; color: #aaaabc; font-weight: 500; }
 
-/* Espacio entre lista de artículos y botones */
 .spacer { flex: 0; min-height: 12px; }
 
 /* ─────────────────────────────────────────
@@ -224,95 +221,90 @@ body:has(.summary-screen) {
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* ─── BOTÓN KASSIEREN — verde grande ─── */
 .btn-kassieren {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 22px;
-  border-radius: 18px;
+  padding: 20px;
+  border-radius: 14px;
   border: none;
-  background: #4ade80;
-  color: #0a0b0e;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 1px;
+  background: #2563eb;
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
   user-select: none;
 }
 
-.btn-kassieren:hover { background: #6ee7a0; }
-.btn-kassieren:active { transform: scale(0.98); background: #22c55e; }
+.btn-kassieren:hover { background: #3b82f6; }
+.btn-kassieren:active { transform: scale(0.98); background: #1d4ed8; }
 
-/* Kassieren gris cuando no hay artículos */
 .btn-kassieren:disabled {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.09);
+  color: rgba(255, 255, 255, 0.15);
   cursor: not-allowed;
 }
 
-.btn-icon { font-size: 22px; }
+.btn-icon { font-size: 18px; }
 
-/* Fila con STORNO y LEEREN lado a lado */
 .btn-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* ─── BOTÓN STORNO y LEEREN — grises ─── */
 .btn-secondary {
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.7);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid rgba(180,190,220,0.14);
+  background: rgba(255,255,255,0.07);
+  color: rgba(255, 255, 255, 0.5);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
   user-select: none;
+  letter-spacing: 0.2px;
 }
 
-.btn-secondary:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-secondary:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 .btn-secondary:active { transform: scale(0.97); }
-.btn-secondary:disabled { opacity: 0.25; cursor: not-allowed; }
+.btn-secondary:disabled { opacity: 0.2; cursor: not-allowed; }
 
-/* LEEREN se pone rojo al hacer hover */
 .btn-danger:hover {
-  background: rgba(248, 113, 113, 0.12);
-  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.25);
   color: #f87171;
 }
 
-/* ─── BOTÓN LETZTE VERKÄUFE — historial ─── */
 .btn-history {
   width: 100%;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.07);
+  padding: 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(180,190,220,0.1);
   background: transparent;
-  color: rgba(255,255,255,0.4);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  color: #8a8a9a;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.2px;
 }
 
-.btn-history:hover { color: rgba(255,255,255,0.7); border-color: rgba(255,255,255,0.15); }
+.btn-history:hover { color: #aaaabc; border-color: rgba(180,190,220,0.18); }
 
 /* ─────────────────────────────────────────
    HISTORIAL DE VENTAS
-   Panel que sube desde abajo
 ───────────────────────────────────────── */
 .sales-section {
   position: fixed;
@@ -320,21 +312,19 @@ body:has(.summary-screen) {
   left: 0;
   right: 0;
   max-height: 50vh;
-  background: #13151a;
-  border-top: 1px solid rgba(255,255,255,0.1);
+  background: #2c2c30;
+  border-top: 1px solid rgba(180,190,220,0.14);
   padding: 20px;
   overflow-y: auto;
   z-index: 100;
   animation: slideUp 0.25s ease;
 }
 
-/* Animación de entrada del historial */
 @keyframes slideUp {
   from { transform: translateY(100%); opacity: 0; }
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* Cabecera del historial con botón cerrar */
 .sales-header {
   display: flex;
   align-items: center;
@@ -343,29 +333,28 @@ body:has(.summary-screen) {
 }
 
 .sales-title {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  opacity: 0.5;
+  color: #8a8a9a;
   margin: 0;
 }
 
-/* Botón ✕ Schließen del historial */
 .btn-close-history {
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.6);
-  font-family: 'DM Sans', sans-serif;
+  border: 1px solid rgba(180,190,220,0.14);
+  background: rgba(255,255,255,0.07);
+  color: #9a9aaa;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-close-history:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-close-history:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 
 .sales-list {
   list-style: none;
@@ -376,29 +365,26 @@ body:has(.summary-screen) {
   gap: 2px;
 }
 
-/* Fila de cada venta en el historial */
 .sale-row {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 14px;
-  border-radius: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.sale-row:hover { background: rgba(255,255,255,0.05); }
+.sale-row:hover { background: rgba(255,255,255,0.07); }
 
-/* Hora ej: "18:32 • 05.03.2026" */
-.sale-time { font-size: 13px; opacity: 0.5; min-width: 120px; }
-.sale-items { font-size: 13px; opacity: 0.6; flex: 1; }
-.sale-total { font-family: 'DM Mono', monospace; font-size: 16px; color: #fff; }
-.chevron { font-size: 11px; opacity: 0.4; }
+.sale-time { font-size: 12px; color: #8a8a9a; min-width: 120px; }
+.sale-items { font-size: 13px; color: #9a9aaa; flex: 1; }
+.sale-total { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+.chevron { font-size: 10px; color: #8a8a9a; }
 
-/* Detalle expandido de una venta */
 .sale-details {
-  padding: 8px 14px 14px 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  padding: 8px 12px 12px 12px;
+  border-bottom: 1px solid rgba(180,190,220,0.06);
 }
 
 .detail-row {
@@ -406,19 +392,19 @@ body:has(.summary-screen) {
   justify-content: space-between;
   align-items: center;
   padding: 5px 0;
-  font-size: 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 13px;
+  border-bottom: 1px solid rgba(99, 132, 199, 0.05);
+  color: #b8b8ca;
 }
 
 .detail-row:last-child { border-bottom: none; }
-.detail-row span:last-child { font-family: 'DM Mono', monospace; font-weight: 500; opacity: 0.8; }
+.detail-row span:last-child { font-weight: 500; color: #e0e0ee; }
 
-/* ─── BOTÓN ✕ para borrar artículo individual ─── */
 .btn-remove-item {
   background: transparent;
   border: none;
-  color: rgba(255,255,255,0.3);
-  font-size: 13px;
+  color: rgba(255,255,255,0.35);
+  font-size: 12px;
   cursor: pointer;
   padding: 4px 6px;
   border-radius: 6px;
@@ -426,53 +412,51 @@ body:has(.summary-screen) {
   line-height: 1;
 }
 
-.btn-remove-item:hover { color: #f87171; background: rgba(248, 113, 113, 0.12); }
+.btn-remove-item:hover { color: #f87171; background: rgba(239, 68, 68, 0.1); }
 
 /* ─────────────────────────────────────────
    PANTALLA TURNO CERRADO
-   Aparece al iniciar sin turno activo
 ───────────────────────────────────────── */
 .shift-screen {
   display: flex;
   align-items: center;
   justify-content: center;
   height: 100dvh;
-  background: #0a0b0e;
+  background: #2c2c30;
 }
 
 .shift-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   text-align: center;
 }
 
-.shift-icon { font-size: 56px; }
-.shift-title { font-size: 36px; font-weight: 900; margin: 0; letter-spacing: -1px; }
-.shift-subtitle { font-size: 16px; opacity: 0.4; margin: 0; }
+.shift-icon { font-size: 52px; }
+.shift-title { font-size: 34px; font-weight: 700; margin: 0; letter-spacing: -1px; color: #fff; }
+.shift-subtitle { font-size: 15px; color: #8a8a9a; margin: 0; font-weight: 400; }
 
-/* Botón verde grande para abrir turno */
 .btn-open-shift {
-  margin-top: 12px;
-  padding: 20px 48px;
-  border-radius: 18px;
+  margin-top: 16px;
+  padding: 18px 52px;
+  border-radius: 14px;
   border: none;
-  background: #4ade80;
-  color: #0a0b0e;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 20px;
-  font-weight: 900;
+  background: #2563eb;
+  color: #fff;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
+  letter-spacing: -0.2px;
 }
 
-.btn-open-shift:hover { background: #6ee7a0; }
+.btn-open-shift:hover { background: #3b82f6; }
 .btn-open-shift:active { transform: scale(0.97); }
 
 /* ─────────────────────────────────────────
    BARRA INFO TURNO ACTIVO
-   Barra verde arriba del panel derecho
 ───────────────────────────────────────── */
 .shift-info {
   display: flex;
@@ -481,39 +465,36 @@ body:has(.summary-screen) {
   margin-bottom: 14px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(74, 222, 128, 0.08);
-  border: 1px solid rgba(74, 222, 128, 0.2);
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
-/* Texto "● Turno offen seit..." en verde */
-.shift-label { font-size: 12px; color: #4ade80; font-weight: 500; }
+.shift-label { font-size: 12px; color: #3b82f6; font-weight: 500; }
 
-/* Botón rojo para cerrar turno */
 .btn-close-shift {
-  padding: 6px 14px;
+  padding: 5px 14px;
   border-radius: 8px;
-  border: 1px solid rgba(248, 113, 113, 0.3);
-  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.08);
   color: #f87171;
-  font-family: 'DM Sans', sans-serif;
+  font-family: inherit;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-close-shift:hover { background: rgba(248, 113, 113, 0.2); }
+.btn-close-shift:hover { background: rgba(239, 68, 68, 0.15); }
 
 /* ─────────────────────────────────────────
    PANTALLA RESUMEN DE TURNO
-   Aparece al cerrar el turno
 ───────────────────────────────────────── */
 .summary-screen {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   min-height: 100dvh;
-  background: #0a0b0e;
+  background: #2c2c30;
   padding: 20px;
   overflow-y: auto;
 }
@@ -522,71 +503,66 @@ body:has(.summary-screen) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
   max-width: 480px;
   text-align: center;
-  padding: 20px 0 40px;
+  padding: 24px 0 40px;
 }
 
-.summary-icon { font-size: 48px; }
-.summary-title { font-size: 28px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
+.summary-icon { font-size: 44px; }
+.summary-title { font-size: 26px; font-weight: 700; margin: 0; letter-spacing: -0.5px; color: #fff; }
 
-/* Horario apertura → cierre */
 .summary-time {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: 13px;
-  opacity: 0.5;
+  color: #8a8a9a;
 }
 
 .time-arrow { opacity: 0.4; }
 
-/* Estadísticas: total vendido y número de ventas */
 .summary-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
 .stat-box {
   padding: 16px;
-  border-radius: 16px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(180,190,220,0.12);
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  opacity: 0.4;
+  color: #8a8a9a;
   margin-bottom: 6px;
 }
 
-.stat-value { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; }
+.stat-value { font-size: 24px; font-weight: 300; letter-spacing: -0.5px; color: #fff; }
+.stat-value.green { color: #3b82f6; }
 
-/* Total en verde */
-.stat-value.green { color: #4ade80; }
-
-/* Tabla de productos vendidos en el turno */
 .summary-products {
   width: 100%;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(180,190,220,0.12);
+  border-radius: 14px;
   padding: 16px;
 }
 
 .summary-products-title {
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  opacity: 0.4;
+  color: #8a8a9a;
   margin-bottom: 12px;
   text-align: left;
 }
@@ -596,92 +572,80 @@ body:has(.summary-screen) {
   align-items: center;
   gap: 10px;
   padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(180,190,220,0.06);
   font-size: 14px;
 }
 
 .summary-product-row:last-child { border-bottom: none; }
-.sp-qty { font-family: 'DM Mono', monospace; color: #4ade80; min-width: 32px; text-align: left; }
-.sp-name { flex: 1; text-align: left; font-weight: 500; }
-.sp-total { font-family: 'DM Mono', monospace; opacity: 0.7; }
+.sp-qty { color: #3b82f6; min-width: 32px; text-align: left; font-weight: 600; font-size: 13px; }
+.sp-name { flex: 1; text-align: left; font-weight: 500; color: #e0e0ee; }
+.sp-total { color: #9a9aaa; font-size: 13px; font-weight: 500; }
 
-/* ─── BOTONES CSV + PDF + NUEVO TURNO en una fila ─── */
 .summary-actions {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
-/* Botón CSV */
 .btn-export-csv {
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(180,190,220,0.18);
+  background: rgba(255,255,255,0.08);
+  color: #b8b8ca;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-export-csv:hover { background: rgba(255,255,255,0.1); }
+.btn-export-csv:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
-/* Botón PDF */
 .btn-export-pdf {
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(74, 222, 128, 0.3);
-  background: rgba(74, 222, 128, 0.08);
-  color: #4ade80;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: rgba(59, 130, 246, 0.06);
+  color: #60a5fa;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-export-pdf:hover { background: rgba(74, 222, 128, 0.15); }
+.btn-export-pdf:hover { background: rgba(59, 130, 246, 0.12); }
 
-/* Botón nuevo turno — verde sólido */
 .btn-new-shift {
-  padding: 16px;
-  border-radius: 14px;
+  padding: 14px;
+  border-radius: 12px;
   border: none;
-  background: #4ade80;
-  color: #0a0b0e;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 14px;
-  font-weight: 900;
+  background: #2563eb;
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
 }
 
-.btn-new-shift:hover { background: #6ee7a0; }
+.btn-new-shift:hover { background: #3b82f6; }
 .btn-new-shift:active { transform: scale(0.98); }
 
-/* ─── Scrollbar fina y discreta ─── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
-
-
 /* ─────────────────────────────────────────
-   MODAL ZAHLUNG / WECHSELGELD
+   MODAL ZAHLUNG
 ───────────────────────────────────────── */
-
-/* Fondo oscuro semitransparente */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 500;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   animation: fadeIn 0.15s ease;
 }
 
@@ -690,41 +654,36 @@ body:has(.summary-screen) {
   to   { opacity: 1; }
 }
 
-/* Caja central del modal */
 .modal-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  background: #13151a;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 24px;
+  background: #2c2c30;
+  border: 1px solid rgba(180,190,220,0.14);
+  border-radius: 22px;
   padding: 24px 20px;
   width: 100%;
   max-width: 340px;
   animation: slideUp 0.2s ease;
 }
 
-/* Etiqueta "ZU ZAHLEN" */
 .modal-total-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 2px;
-  opacity: 0.4;
+  color: #8a8a9a;
   text-transform: uppercase;
 }
 
-/* Total grande a cobrar */
 .modal-total {
-  font-family: 'DM Mono', monospace;
-  font-size: 48px;
-  font-weight: 500;
+  font-size: 52px;
+  font-weight: 300;
   color: #fff;
-  letter-spacing: -1px;
+  letter-spacing: -2px;
   line-height: 1;
 }
 
-/* Botones rápidos de billetes */
 .quick-btns {
   display: flex;
   gap: 8px;
@@ -734,213 +693,190 @@ body:has(.summary-screen) {
 }
 
 .quick-btn {
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(180,190,220,0.14);
+  background: rgba(255,255,255,0.08);
+  color: #b8b8ca;
+  font-family: inherit;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
   flex: 1;
   min-width: 52px;
 }
 
-.quick-btn:hover {
-  background: rgba(255,255,255,0.1);
-}
+.quick-btn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
-/* Botón activo — seleccionado */
 .quick-btn.active {
-  background: rgba(74, 222, 128, 0.15);
-  border-color: rgba(74, 222, 128, 0.5);
-  color: #4ade80;
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #60a5fa;
 }
 
-/* Botón Passend — exacto */
 .quick-btn.passend {
-  background: rgba(74, 222, 128, 0.08);
-  border-color: rgba(74, 222, 128, 0.2);
-  color: #4ade80;
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
 }
 
 .quick-btn.passend.active {
-  background: rgba(74, 222, 128, 0.2);
-  border-color: #4ade80;
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
 }
 
-/* Display del monto dado */
 .given-display {
   width: 100%;
   text-align: center;
   padding: 10px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(180,190,220,0.12);
 }
 
 .given-label {
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  opacity: 0.4;
+  color: #8a8a9a;
   text-transform: uppercase;
   margin-bottom: 4px;
 }
 
 .given-amount {
-  font-family: 'DM Mono', monospace;
   font-size: 28px;
-  font-weight: 500;
+  font-weight: 300;
   color: #fff;
+  letter-spacing: -0.5px;
 }
 
-.given-amount.empty {
-  color: rgba(255,255,255,0.2);
-}
+.given-amount.empty { color: rgba(255, 255, 255, 0.15); }
 
-/* Teclado numérico */
 .numpad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 7px;
   width: 100%;
 }
 
 .numpad-btn {
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.05);
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(180,190,220,0.1);
+  background: rgba(255,255,255,0.07);
+  color: #f0f0f2;
+  font-family: inherit;
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 400;
   cursor: pointer;
   transition: background 0.1s, transform 0.1s;
   user-select: none;
 }
 
-.numpad-btn:hover {
-  background: rgba(255,255,255,0.1);
-}
+.numpad-btn:hover { background: rgba(255, 255, 255, 0.07); }
+.numpad-btn:active { transform: scale(0.95); background: rgba(59, 130, 246, 0.12); }
 
-.numpad-btn:active {
-  transform: scale(0.95);
-  background: rgba(74, 222, 128, 0.15);
-}
-
-/* Botón ⌫ en rojo suave */
 .numpad-del {
   color: #f87171;
-  border-color: rgba(248, 113, 113, 0.2);
-  background: rgba(248, 113, 113, 0.06);
+  border-color: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.04);
 }
 
-.numpad-del:hover {
-  background: rgba(248, 113, 113, 0.12);
-}
+.numpad-del:hover { background: rgba(239, 68, 68, 0.1); }
 
-/* Caja de Wechselgeld */
 .wechselgeld-box {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  border-radius: 14px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(180,190,220,0.12);
 }
 
-/* Wechselgeld positivo — verde */
 .wechselgeld-box.positive {
-  background: rgba(74, 222, 128, 0.08);
-  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
-/* Wechselgeld negativo — rojo */
 .wechselgeld-box.negative {
-  background: rgba(248, 113, 113, 0.08);
-  border-color: rgba(248, 113, 113, 0.3);
+  background: rgba(239, 68, 68, 0.06);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .wg-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.5px;
-  opacity: 0.5;
+  color: #8a8a9a;
   text-transform: uppercase;
 }
 
-.wg-amount {
-  font-family: 'DM Mono', monospace;
-  font-size: 22px;
-  font-weight: 500;
-  color: #fff;
-}
+.wg-amount { font-size: 22px; font-weight: 300; color: #fff; letter-spacing: -0.5px; }
+.wechselgeld-box.positive .wg-amount { color: #60a5fa; }
+.wechselgeld-box.negative .wg-amount { color: #f87171; }
 
-.wechselgeld-box.positive .wg-amount {
-  color: #4ade80;
-}
-
-.wechselgeld-box.negative .wg-amount {
-  color: #f87171;
-}
-
-/* Botones confirmar / cancelar */
 .modal-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
-/* Botón cancelar */
 .btn-cancel {
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.7);
-  font-family: 'DM Sans', sans-serif;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid rgba(180,190,220,0.14);
+  background: rgba(255,255,255,0.07);
+  color: #9a9aaa;
+  font-family: inherit;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
 }
 
-.btn-cancel:hover {
-  background: rgba(255,255,255,0.1);
-}
+.btn-cancel:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 
-/* Botón confirmar — verde */
 .btn-confirm {
-  padding: 16px;
-  border-radius: 14px;
+  padding: 15px;
+  border-radius: 12px;
   border: none;
-  background: #4ade80;
-  color: #0a0b0e;
-  font-family: 'DM Sans', sans-serif;
+  background: #2563eb;
+  color: #fff;
+  font-family: inherit;
   font-size: 15px;
-  font-weight: 900;
+  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
 }
 
-.btn-confirm:hover {
-  background: #6ee7a0;
-}
+.btn-confirm:hover { background: #3b82f6; }
+.btn-confirm:active { transform: scale(0.97); }
 
-.btn-confirm:active {
-  transform: scale(0.97);
-}
-
-/* Kassieren desactivado si monto insuficiente */
 .btn-confirm:disabled {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.09);
+  color: rgba(255, 255, 255, 0.15);
   cursor: not-allowed;
 }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(99, 132, 199, 0.2); border-radius: 99px; }
+
+.btn-dashboard {
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.1);
+  color: #60a5fa;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-dashboard:hover { background: rgba(59, 130, 246, 0.2); }

@@ -8,6 +8,8 @@ import { PinService } from '../core/pin.service';
 import { ShiftSummaryComponent } from './shift-summary.component';
 import { PaymentModalComponent } from './payment-modal.component';
 import { PinModalComponent } from '../shared/pin-modal.component';
+import { RouterModule } from '@angular/router';
+
 
 type Order = {
   id: string;
@@ -22,7 +24,7 @@ type PinAction = 'open-shift' | 'close-shift' | null;
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, ShiftSummaryComponent, PaymentModalComponent, PinModalComponent],
+  imports: [CommonModule, RouterModule, ShiftSummaryComponent, PaymentModalComponent, PinModalComponent],
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {

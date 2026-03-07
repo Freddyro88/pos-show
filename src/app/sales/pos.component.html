@@ -69,10 +69,13 @@
     <!-- ─── PANEL DERECHO — Checkout ─── -->
     <aside class="checkout-panel">
 
-      <div class="shift-info">
-        <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
-        <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
-      </div>
+   <div class="shift-info">
+  <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
+
+    <button class="btn-dashboard" routerLink="/dashboard">📊 Dashboard</button>
+    <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
+  </div>
+
 
       <div class="total-section">
         <div class="total-label">Gesamt</div>
