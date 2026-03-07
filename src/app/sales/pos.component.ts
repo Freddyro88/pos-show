@@ -9,7 +9,6 @@ import { ShiftSummaryComponent } from './shift-summary.component';
 import { PaymentModalComponent } from './payment-modal.component';
 import { PinModalComponent } from '../shared/pin-modal.component';
 
-// ─── TYPEN ─────────────────────────────────────────
 type Order = {
   id: string;
   items: Product[];
@@ -18,8 +17,7 @@ type Order = {
   shiftId?: string;
 };
 
-// Welche PIN-Aktion wird gerade ausgeführt?
-type PinAction = 'open-shift' | 'close-shift' | 'set-pin' | null;
+type PinAction = 'open-shift' | 'close-shift' | null;
 
 @Component({
   selector: 'app-pos',
@@ -29,32 +27,22 @@ type PinAction = 'open-shift' | 'close-shift' | 'set-pin' | null;
 })
 export class PosComponent implements OnInit {
 
-  // ─── DATEN ─────────────────────────────────────────
   products: Product[] = [];
   currentOrder: Product[] = [];
   expandedOrderId: string | null = null;
   showSales = false;
-
-  // ─── MODAL ZAHLUNG ─────────────────────────────────
   showPaymentModal = false;
-
-  // ─── BESTELLUNGEN — nur aktuelle Kassenschicht ─────
   orders: Order[] = [];
-
-  // ─── AKTIVE KASSENSCHICHT ──────────────────────────
   activeShift: Shift | null = null;
-
-  // ─── GESCHLOSSENE KASSENSCHICHT ────────────────────
   closedShift: Shift | null = null;
   closedShiftOrders: StoredOrder[] = [];
 
-  // ─── PIN MODAL ────────────────────────────────────
+  // ─── PIN ──────────────────────────────────────────
   showPinModal = false;
   pinModalMode: 'verify' | 'set' = 'verify';
   pinActionLabel = '';
   pendingPinAction: PinAction = null;
 
-  // ─── CONSTRUCTOR ───────────────────────────────────
   constructor(
     private productService: ProductService,
     private ordersDb: OrdersDbService,
@@ -65,7 +53,6 @@ export class PosComponent implements OnInit {
     this.products = this.productService.getAll();
   }
 
-  // ─── INIT ──────────────────────────────────────────
   async ngOnInit() {
     this.activeShift = await this.shiftsDb.getActiveShift();
     if (this.activeShift) {
@@ -74,7 +61,6 @@ export class PosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── BESTELLUNGEN LADEN ────────────────────────────
   private async loadOrdersForShift(shiftId: string) {
     const all = await this.ordersDb.getAllOrders();
     this.orders = all
@@ -82,27 +68,31 @@ export class PosComponent implements OnInit {
       .sort((a, b) => b.timestamp - a.timestamp) as unknown as Order[];
   }
 
-  // ─── PIN MODAL ÖFFNEN ─────────────────────────────
-  private async requestPin(action: PinAction, label: string) {
-    const hasPin = await this.pinService.hasPin();
-
-    if (!hasPin) {
-      // Kein PIN gesetzt → erst PIN festlegen
-      this.pendingPinAction = action;
-      this.pinModalMode = 'set';
-      this.pinActionLabel = 'PIN festlegen';
-      this.showPinModal = true;
-    } else {
-      // PIN vorhanden → verifizieren
-      this.pendingPinAction = action;
-      this.pinModalMode = 'verify';
-      this.pinActionLabel = label;
-      this.showPinModal = true;
-    }
-    this.cdr.detectChanges();
+  // ─── PIN FLOW ─────────────────────────────────────
+  async openShift() {
+    await this.requestPin('open-shift', 'Kassenschicht öffnen');
   }
 
-  // ─── PIN ERFOLG ───────────────────────────────────
+  async closeShift() {
+    await this.requestPin('close-shift', 'Kassenschicht schließen');
+  }
+
+  private async requestPin(action: PinAction, label: string) {
+    try {
+      const hasPin = await this.pinService.hasPin();
+      this.pendingPinAction = action;
+      this.pinModalMode = hasPin ? 'verify' : 'set';
+      this.pinActionLabel = label;
+      this.showPinModal = true;
+      this.cdr.detectChanges();
+    } catch (e) {
+      console.error('❌ PIN service error:', e);
+      // Fallback: ejecutar sin PIN
+      if (action === 'open-shift') await this._doOpenShift();
+      else if (action === 'close-shift') await this._doCloseShift();
+    }
+  }
+
   async onPinSuccess() {
     this.showPinModal = false;
     const action = this.pendingPinAction;
@@ -113,24 +103,12 @@ export class PosComponent implements OnInit {
     else if (action === 'close-shift') await this._doCloseShift();
   }
 
-  // ─── PIN ABGEBROCHEN ──────────────────────────────
   onPinDismissed() {
     this.showPinModal = false;
     this.pendingPinAction = null;
     this.cdr.detectChanges();
   }
 
-  // ─── KASSENSCHICHT — öffnen (mit PIN) ─────────────
-  async openShift() {
-    await this.requestPin('open-shift', 'Kassenschicht öffnen');
-  }
-
-  // ─── KASSENSCHICHT — schließen (mit PIN) ──────────
-  async closeShift() {
-    await this.requestPin('close-shift', 'Kassenschicht schließen');
-  }
-
-  // ─── INTERNE LOGIK — Schicht öffnen ───────────────
   private async _doOpenShift() {
     const shift: Shift = {
       id: crypto.randomUUID(),
@@ -147,7 +125,6 @@ export class PosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── INTERNE LOGIK — Schicht schließen ────────────
   private async _doCloseShift() {
     if (!this.activeShift) return;
     this.activeShift.closedAt = Date.now();
@@ -161,13 +138,12 @@ export class PosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── VERLAUF ──────────────────────────────────────
+  // ─── VERKAUF ──────────────────────────────────────
   toggleSales() {
     this.showSales = !this.showSales;
     this.expandedOrderId = null;
   }
 
-  // ─── PRODUKTE ─────────────────────────────────────
   addItem(product: Product) {
     if (!this.activeShift) return;
     this.currentOrder = [...this.currentOrder, product];
@@ -191,7 +167,6 @@ export class PosComponent implements OnInit {
     this.currentOrder = [];
   }
 
-  // ─── KASSIEREN ────────────────────────────────────
   checkout() {
     if (this.currentOrder.length === 0) return;
     if (!this.activeShift) return;

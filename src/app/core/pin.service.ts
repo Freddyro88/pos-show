@@ -9,23 +9,30 @@ export class PinService {
   private dbPromise: Promise<IDBDatabase> | null = null;
 
   private getDb(): Promise<IDBDatabase> {
-    if (this.dbPromise) return this.dbPromise;
-    this.dbPromise = new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
-        const db = req.result;
-        if (!db.objectStoreNames.contains('orders'))
-          db.createObjectStore('orders', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains('shifts'))
-          db.createObjectStore('shifts', { keyPath: 'id' });
-        if (!db.objectStoreNames.contains(SETTINGS_STORE))
-          db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-    return this.dbPromise;
-  }
+  if (this.dbPromise) return this.dbPromise;
+  this.dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (event) => {
+      const db = req.result;
+      // Solo crear stores que no existen
+      if (!db.objectStoreNames.contains('orders'))
+        db.createObjectStore('orders', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('shifts'))
+        db.createObjectStore('shifts', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains(SETTINGS_STORE))
+        db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
+    };
+    req.onblocked = () => {
+      console.warn('⚠️ IndexedDB blocked — cerrá otras pestañas');
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => {
+      console.error('❌ IndexedDB error:', req.error);
+      reject(req.error);
+    };
+  });
+  return this.dbPromise;
+}
 
   private async getSetting(key: string): Promise<string | null> {
     const db = await this.getDb();
