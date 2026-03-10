@@ -6,10 +6,8 @@ import { OrdersDbService, StoredOrder } from '../core/orders-db.service';
 import { ShiftsDbService, Shift } from '../core/shifts-db.service';
 import { PinService } from '../core/pin.service';
 import { ShiftSummaryComponent } from './shift-summary.component';
-import { PaymentModalComponent } from './payment-modal.component';
 import { PinModalComponent } from '../shared/pin-modal.component';
 import { RouterModule } from '@angular/router';
-
 
 type Order = {
   id: string;
@@ -24,7 +22,7 @@ type PinAction = 'open-shift' | 'close-shift' | null;
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, RouterModule, ShiftSummaryComponent, PaymentModalComponent, PinModalComponent],
+  imports: [CommonModule, RouterModule, ShiftSummaryComponent, PinModalComponent],
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {
@@ -33,7 +31,6 @@ export class PosComponent implements OnInit {
   currentOrder: Product[] = [];
   expandedOrderId: string | null = null;
   showSales = false;
-  showPaymentModal = false;
   orders: Order[] = [];
   activeShift: Shift | null = null;
   closedShift: Shift | null = null;
@@ -44,6 +41,11 @@ export class PosComponent implements OnInit {
   pinModalMode: 'verify' | 'set' = 'verify';
   pinActionLabel = '';
   pendingPinAction: PinAction = null;
+
+  // ─── NUMPAD — Wechselgeld ─────────────────────────
+  numpadInput: string = '';
+  quickAmounts = [5, 10, 20, 50];
+  keys = ['1','2','3','4','5','6','7','8','9',',','0','⌫'];
 
   constructor(
     private productService: ProductService,
@@ -89,7 +91,6 @@ export class PosComponent implements OnInit {
       this.cdr.detectChanges();
     } catch (e) {
       console.error('❌ PIN service error:', e);
-      // Fallback: ejecutar sin PIN
       if (action === 'open-shift') await this._doOpenShift();
       else if (action === 'close-shift') await this._doCloseShift();
     }
@@ -100,7 +101,6 @@ export class PosComponent implements OnInit {
     const action = this.pendingPinAction;
     this.pendingPinAction = null;
     this.cdr.detectChanges();
-
     if (action === 'open-shift') await this._doOpenShift();
     else if (action === 'close-shift') await this._doCloseShift();
   }
@@ -124,6 +124,7 @@ export class PosComponent implements OnInit {
     this.closedShift = null;
     this.closedShiftOrders = [];
     this.orders = [];
+    this.numpadInput = '';
     this.cdr.detectChanges();
   }
 
@@ -138,6 +139,52 @@ export class PosComponent implements OnInit {
     this.closedShift = this.activeShift;
     this.activeShift = null;
     this.cdr.detectChanges();
+  }
+
+  // ─── NUMPAD LOGIK ─────────────────────────────────
+  pressKey(key: string) {
+    if (key === '⌫') {
+      this.numpadInput = this.numpadInput.slice(0, -1);
+      return;
+    }
+    if (key === ',') {
+      if (this.numpadInput.includes(',')) return;
+      this.numpadInput += ',';
+      return;
+    }
+    if (this.numpadInput.includes(',')) {
+      const decimals = this.numpadInput.split(',')[1];
+      if (decimals && decimals.length >= 2) return;
+    }
+    const beforeComma = this.numpadInput.split(',')[0];
+    if (!this.numpadInput.includes(',') && beforeComma.length >= 4) return;
+    this.numpadInput += key;
+  }
+
+  setQuickAmount(cents: number) {
+    const euros = cents / 100;
+    this.numpadInput = Number.isInteger(euros)
+      ? euros.toString()
+      : euros.toFixed(2).replace('.', ',');
+  }
+
+  setPassend() {
+    this.setQuickAmount(this.currentTotalCents);
+  }
+
+  get givenCents(): number {
+    if (!this.numpadInput) return 0;
+    const val = parseFloat(this.numpadInput.replace(',', '.'));
+    if (isNaN(val)) return 0;
+    return Math.round(val * 100);
+  }
+
+  get wechselgeld(): number {
+    return this.givenCents - this.currentTotalCents;
+  }
+
+  get canKassieren(): boolean {
+    return this.currentOrder.length > 0 && this.givenCents >= this.currentTotalCents;
   }
 
   // ─── VERKAUF ──────────────────────────────────────
@@ -167,18 +214,13 @@ export class PosComponent implements OnInit {
 
   clearOrder() {
     this.currentOrder = [];
+    this.numpadInput = '';
   }
 
-  checkout() {
-    if (this.currentOrder.length === 0) return;
+  async checkout() {
+    if (!this.canKassieren) return;
     if (!this.activeShift) return;
-    this.showPaymentModal = true;
-    this.cdr.detectChanges();
-  }
 
-  async confirmPayment() {
-    if (!this.activeShift) return;
-    this.showPaymentModal = false;
     this.bumpUsageFromCurrentOrder();
 
     const totalCents = this.currentOrder.reduce((sum, p) => sum + p.priceCents, 0);
@@ -203,11 +245,6 @@ export class PosComponent implements OnInit {
     this.orders = [order, ...this.orders];
     this.clearOrder();
     this.products = this.productService.getAll();
-    this.cdr.detectChanges();
-  }
-
-  cancelPayment() {
-    this.showPaymentModal = false;
     this.cdr.detectChanges();
   }
 

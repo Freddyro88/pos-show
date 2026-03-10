@@ -8,22 +8,16 @@
   </app-pin-modal>
 }
 
-<!-- ─────────────────────────────────────────
-   RESUMEN DE KASSENSCHICHT CERRADA
-───────────────────────────────────────── -->
+<!-- ─── KASSENSCHICHT GESCHLOSSEN ─────────────────────────────────────────── -->
 @if (closedShift) {
-
   <app-shift-summary
     [shift]="closedShift"
     [orders]="closedShiftOrders"
     (newShift)="openShift()">
   </app-shift-summary>
 
-<!-- ─────────────────────────────────────────
-   PANTALLA SIN KASSENSCHICHT ACTIVA
-───────────────────────────────────────── -->
+<!-- ─── KEINE KASSENSCHICHT ───────────────────────────────────────────────── -->
 } @else if (!activeShift) {
-
   <div class="shift-screen">
     <div class="shift-box">
       <div class="shift-icon">🏪</div>
@@ -35,22 +29,13 @@
     </div>
   </div>
 
-<!-- ─────────────────────────────────────────
-   POS ACTIVO
-───────────────────────────────────────── -->
+<!-- ─── POS AKTIV ──────────────────────────────────────────────────────────── -->
 } @else {
-
-  @if (showPaymentModal) {
-    <app-payment-modal
-      [totalCents]="currentTotalCents"
-      (confirmed)="confirmPayment()"
-      (cancelled)="cancelPayment()">
-    </app-payment-modal>
-  }
-
   <div class="pos-layout">
 
-    <!-- ─── PANEL IZQUIERDO — Produkte ─── -->
+    <!-- ══════════════════════════════════════
+         PANEL LINKS — Produkte
+    ══════════════════════════════════════ -->
     <section class="products-panel">
       <div class="panel-header">
         <span class="brand">POS Show</span>
@@ -66,67 +51,136 @@
       </div>
     </section>
 
-    <!-- ─── PANEL DERECHO — Checkout ─── -->
+    <!-- ══════════════════════════════════════
+         PANEL RECHTS — Checkout + Numpad
+    ══════════════════════════════════════ -->
     <aside class="checkout-panel">
 
-   <div class="shift-info">
-  <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
-
-    <button class="btn-dashboard" routerLink="/dashboard">📊 Dashboard</button>
-    <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
-  </div>
-
-
-      <div class="total-section">
-        <div class="total-label">Gesamt</div>
-        <div class="total-amount" [class.has-items]="currentOrder.length > 0">
-          {{ formatEUR(currentTotalCents) }}
-        </div>
-        <div class="item-count">
-          @if (currentOrder.length === 0) {
-            <span class="muted">Keine Artikel</span>
-          } @else {
-            <span class="badge">{{ currentOrder.length }} Artikel</span>
-          }
+      <!-- Shift Info Bar -->
+      <div class="shift-info">
+        <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
+        <div>
+          <button class="btn-dashboard" routerLink="/dashboard">📊 Dashboard</button>
+          <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
         </div>
       </div>
 
-      @if (currentOrder.length > 0) {
-        <div class="current-items">
-          @for (g of summarizeItems(currentOrder); track $index) {
-            <div class="current-item-row">
-              <span class="item-qty">{{ g.qty }}×</span>
-              <span class="item-name">{{ g.name }}</span>
-              <span class="item-total">{{ formatEUR(g.lineTotalCents) }}</span>
-              <button class="btn-remove-item" (click)="removeItem(g.id)">✕</button>
+      <!-- ─── HAUPTBEREICH: Artikel + Numpad nebeneinander ─── -->
+      <div class="checkout-main">
+
+        <!-- LINKE SEITE — Total + Artikel + Aktionen -->
+        <div class="checkout-left">
+
+          <!-- Total -->
+          <div class="total-section">
+            <div class="total-label">Gesamt</div>
+            <div class="total-amount" [class.has-items]="currentOrder.length > 0">
+              {{ formatEUR(currentTotalCents) }}
+            </div>
+            <div class="item-count">
+              @if (currentOrder.length === 0) {
+                <span class="muted">Keine Artikel</span>
+              } @else {
+                <span class="badge">{{ currentOrder.length }} Artikel</span>
+              }
+            </div>
+          </div>
+
+          <!-- Artikel Liste -->
+          @if (currentOrder.length > 0) {
+            <div class="current-items">
+              @for (g of summarizeItems(currentOrder); track $index) {
+                <div class="current-item-row">
+                  <span class="item-qty">{{ g.qty }}×</span>
+                  <span class="item-name">{{ g.name }}</span>
+                  <span class="item-total">{{ formatEUR(g.lineTotalCents) }}</span>
+                  <button class="btn-remove-item" (click)="removeItem(g.id)">✕</button>
+                </div>
+              }
             </div>
           }
-        </div>
-      }
 
-      <div class="spacer"></div>
+          <div class="spacer"></div>
 
-      <div class="actions">
-        <button class="btn-kassieren" (click)="checkout()" [disabled]="currentOrder.length === 0">
-          <span class="btn-icon">✓</span>
-          KASSIEREN
-        </button>
-        <div class="btn-row">
-          <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
-            ↩ STORNO
+          <!-- STORNO + LEEREN -->
+          <div class="btn-row">
+            <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
+              ↩ STORNO
+            </button>
+            <button class="btn-secondary btn-danger" (click)="clearOrder()" [disabled]="currentOrder.length === 0">
+              ✕ LEEREN
+            </button>
+          </div>
+
+          <!-- Letzte Verkäufe -->
+          <button class="btn-history" (click)="toggleSales()">
+            {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
           </button>
-          <button class="btn-secondary btn-danger" (click)="clearOrder()" [disabled]="currentOrder.length === 0">
-            ✕ LEEREN
-          </button>
+
         </div>
-        <button class="btn-history" (click)="toggleSales()">
-          {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
-        </button>
+
+        <!-- RECHTE SEITE — Numpad + Wechselgeld + Kassieren -->
+        <div class="checkout-right">
+
+          <!-- Gegeben Display -->
+          <div class="given-display">
+            <div class="given-label">Gegeben</div>
+            <div class="given-amount" [class.empty]="givenCents === 0">
+              {{ givenCents === 0 ? '€ 0,00' : formatEUR(givenCents) }}
+            </div>
+          </div>
+
+          <!-- Schnellbeträge -->
+          <div class="quick-btns">
+            @for (a of quickAmounts; track a) {
+              <button class="quick-btn"
+                [class.active]="givenCents === a * 100"
+                (click)="setQuickAmount(a * 100)">
+                € {{ a }}
+              </button>
+            }
+            <button class="quick-btn passend"
+              [class.active]="givenCents === currentTotalCents && currentTotalCents > 0"
+              (click)="setPassend()">
+              Passend
+            </button>
+          </div>
+
+          <!-- Numpad -->
+          <div class="numpad">
+            @for (key of keys; track key) {
+              <button class="numpad-btn"
+                [class.numpad-del]="key === '⌫'"
+                (click)="pressKey(key)">
+                {{ key }}
+              </button>
+            }
+          </div>
+
+          <!-- Wechselgeld -->
+          <div class="wechselgeld-box"
+            [class.positive]="wechselgeld > 0"
+            [class.negative]="wechselgeld < 0 && givenCents > 0">
+            <span class="wg-label">Wechselgeld</span>
+            <span class="wg-amount">
+              @if (givenCents === 0) { — }
+              @else if (wechselgeld < 0) { Zu wenig: {{ formatEUR(-wechselgeld) }} }
+              @else { {{ formatEUR(wechselgeld) }} }
+            </span>
+          </div>
+
+          <!-- KASSIEREN -->
+          <button class="btn-kassieren" (click)="checkout()" [disabled]="!canKassieren">
+            <span class="btn-icon">✓</span> KASSIEREN
+          </button>
+
+        </div>
       </div>
 
     </aside>
   </div>
 
+  <!-- Letzte Verkäufe Panel -->
   @if (showSales) {
     <section class="sales-section">
       <div class="sales-header">
@@ -161,5 +215,4 @@
       }
     </section>
   }
-
 }

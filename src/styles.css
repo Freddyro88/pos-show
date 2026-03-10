@@ -48,7 +48,7 @@ body:has(.summary-screen) { overflow: auto; }
 ───────────────────────────────────────── */
 .pos-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 460px 1fr;
   height: 100dvh;
 }
 
@@ -147,11 +147,11 @@ body:has(.summary-screen) { overflow: auto; }
 .checkout-panel {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 16px 20px;
   background: var(--bg-base);
-  max-width: 520px;
   width: 100%;
-  justify-self: center;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 /* ─── SHIFT INFO BAR ─── */
@@ -794,3 +794,64 @@ body:has(.summary-screen) { overflow: auto; }
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+/* ─────────────────────────────────────────
+   CHECKOUT MAIN — dos columnas dentro del panel derecho
+───────────────────────────────────────── */
+.checkout-main {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.checkout-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.checkout-right {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+/* ─── Numpad más grande para iPad ─── */
+.numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+
+.numpad-btn {
+  padding: 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.1s, transform 0.08s;
+  user-select: none;
+}
+
+.numpad-btn:active {
+  transform: scale(0.93);
+  background: var(--accent-dim);
+}
+
+/* ─── KASSIEREN ocupa todo el ancho ─── */
+.checkout-right .btn-kassieren {
+  width: 100%;
+  margin-top: auto;
+  padding: 20px;
+  font-size: 18px;
+}
