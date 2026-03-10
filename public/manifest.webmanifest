@@ -1,9 +1,13 @@
 {
-  "name": "pos-show",
-  "short_name": "pos-show",
+  "name": "POS Show",
+  "short_name": "POS Show",
+  "description": "Offline Point of Sale System",
   "display": "standalone",
+  "orientation": "landscape",
   "scope": "./",
   "start_url": "./",
+  "background_color": "#2c2c30",
+  "theme_color": "#2c2c30",
   "icons": [
     {
       "src": "icons/icon-72x72.png",
