@@ -1,12 +1,50 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>PosShow</title>
+  <title>POS Show</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- ─── VIEWPORT ─────────────────────────────── -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+
+  <!-- ─── PWA / IPAD KIOSK ─────────────────────── -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="POS Show">
+
+  <!-- ─── THEME COLOR ──────────────────────────── -->
+  <meta name="theme-color" content="#2c2c30">
+
+  <!-- ─── PREVENT COPY / SELECTION ────────────── -->
+  <style>
+    * { -webkit-user-select: none; user-select: none; }
+    input, textarea { -webkit-user-select: text; user-select: text; }
+
+    /* Prevent iOS rubber-band scroll */
+    html, body {
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+      touch-action: manipulation;
+    }
+
+    /* Safe area padding for iPad notch/home bar */
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+  </style>
+
+  <!-- ─── ICONS ────────────────────────────────── -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- iPad splash screens (generados por Cristian) -->
+  <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
 </head>
 <body>
   <app-root></app-root>
