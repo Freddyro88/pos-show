@@ -855,3 +855,10 @@ body:has(.summary-screen) { overflow: auto; }
   padding: 20px;
   font-size: 18px;
 }
+
+.summary-show-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent, #0a84ff);
+  margin-bottom: 6px;
+}

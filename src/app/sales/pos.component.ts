@@ -1,9 +1,11 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Product } from '../products/product.model';
 import { ProductService } from '../products/product.service';
 import { OrdersDbService, StoredOrder } from '../core/orders-db.service';
 import { ShiftsDbService, Shift } from '../core/shifts-db.service';
+import { ShowsDbService, Show } from '../core/shows-db.service';
 import { PinService } from '../core/pin.service';
 import { ShiftSummaryComponent } from './shift-summary.component';
 import { PinModalComponent } from '../shared/pin-modal.component';
@@ -22,7 +24,7 @@ type PinAction = 'open-shift' | 'close-shift' | null;
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, RouterModule, ShiftSummaryComponent, PinModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ShiftSummaryComponent, PinModalComponent],
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {
@@ -42,6 +44,10 @@ export class PosComponent implements OnInit {
   pinActionLabel = '';
   pendingPinAction: PinAction = null;
 
+  // ─── SHOWS ────────────────────────────────────────
+  shows: Show[] = [];
+  selectedShowId: string = '';
+
   // ─── NUMPAD — Wechselgeld ─────────────────────────
   numpadInput: string = '';
   quickAmounts = [5, 10, 20, 50];
@@ -51,6 +57,7 @@ export class PosComponent implements OnInit {
     private productService: ProductService,
     private ordersDb: OrdersDbService,
     private shiftsDb: ShiftsDbService,
+    private showsDb: ShowsDbService,
     private pinService: PinService,
     private cdr: ChangeDetectorRef
   ) {
@@ -61,6 +68,11 @@ export class PosComponent implements OnInit {
     this.activeShift = await this.shiftsDb.getActiveShift();
     if (this.activeShift) {
       await this.loadOrdersForShift(this.activeShift.id);
+    }
+    // ─── Lädt alle Shows für das Dropdown ──────────
+    this.shows = await this.showsDb.getAllShows();
+    if (this.shows.length > 0) {
+      this.selectedShowId = this.shows[0].id;
     }
     this.cdr.detectChanges();
   }
@@ -74,6 +86,7 @@ export class PosComponent implements OnInit {
 
   // ─── PIN FLOW ─────────────────────────────────────
   async openShift() {
+    if (!this.selectedShowId) return;
     await this.requestPin('open-shift', 'Kassenschicht öffnen');
   }
 
@@ -112,12 +125,16 @@ export class PosComponent implements OnInit {
   }
 
   private async _doOpenShift() {
+    // ─── Show aus der Auswahl holen ─────────────────
+    const selected = this.shows.find(s => s.id === this.selectedShowId);
     const shift: Shift = {
       id: crypto.randomUUID(),
       openedAt: Date.now(),
       closedAt: null,
       orderIds: [],
       totalCents: 0,
+      showId: selected?.id ?? '',
+      showName: selected?.name ?? 'Unbekanntes Show',
     };
     await this.shiftsDb.saveShift(shift);
     this.activeShift = shift;

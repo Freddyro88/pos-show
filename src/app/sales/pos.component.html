@@ -16,16 +16,36 @@
     (newShift)="openShift()">
   </app-shift-summary>
 
-<!-- ─── KEINE KASSENSCHICHT ───────────────────────────────────────────────── -->
+<!-- ─── KEINE KASSENSCHICHT AKTIV ─────────────────────────────────────────── -->
 } @else if (!activeShift) {
   <div class="shift-screen">
     <div class="shift-box">
       <div class="shift-icon">🏪</div>
       <h1 class="shift-title">POS Show</h1>
       <p class="shift-subtitle">Keine offene Kassenschicht</p>
-      <button class="btn-open-shift" (click)="openShift()">
-        ▶ Kassenschicht öffnen
-      </button>
+
+      <!-- Kein Show vorhanden → zum Admin weiterleiten -->
+      @if (shows.length === 0) {
+        <p class="shift-no-shows">
+          Keine Shows vorhanden.<br>
+          Bitte zuerst im Admin einen Show erstellen.
+        </p>
+        <button class="btn-open-shift btn-goto-admin" routerLink="/dashboard">
+          📊 Zum Admin
+        </button>
+
+      <!-- Shows vorhanden → Dropdown + Kassenschicht öffnen -->
+      } @else {
+        <select class="show-select" [(ngModel)]="selectedShowId">
+          @for (s of shows; track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+        <button class="btn-open-shift" (click)="openShift()">
+          ▶ Kassenschicht öffnen
+        </button>
+      }
+
     </div>
   </div>
 
@@ -56,16 +76,19 @@
     ══════════════════════════════════════ -->
     <aside class="checkout-panel">
 
-      <!-- Shift Info Bar -->
+      <!-- Shift Info Bar — zeigt Show-Name + Öffnungszeit -->
       <div class="shift-info">
-        <span class="shift-label">● Kassenschicht offen seit {{ formatDateTime(activeShift.openedAt) }}</span>
+        <span class="shift-label">
+          🎪 {{ activeShift.showName }} &nbsp;·&nbsp;
+          ● offen seit {{ formatDateTime(activeShift.openedAt) }}
+        </span>
         <div>
           <button class="btn-dashboard" routerLink="/dashboard">📊 Dashboard</button>
           <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
         </div>
       </div>
 
-      <!-- ─── HAUPTBEREICH: Artikel + Numpad nebeneinander ─── -->
+      <!-- ─── HAUPTBEREICH: Artikel links + Numpad rechts ─── -->
       <div class="checkout-main">
 
         <!-- LINKE SEITE — Total + Artikel + Aktionen -->
@@ -112,7 +135,7 @@
             </button>
           </div>
 
-          <!-- Letzte Verkäufe -->
+          <!-- Letzte Verkäufe Toggle -->
           <button class="btn-history" (click)="toggleSales()">
             {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
           </button>
@@ -130,7 +153,7 @@
             </div>
           </div>
 
-          <!-- Schnellbeträge -->
+          <!-- Schnellbeträge — Scheine -->
           <div class="quick-btns">
             @for (a of quickAmounts; track a) {
               <button class="quick-btn"
@@ -157,7 +180,7 @@
             }
           </div>
 
-          <!-- Wechselgeld -->
+          <!-- Wechselgeld Anzeige -->
           <div class="wechselgeld-box"
             [class.positive]="wechselgeld > 0"
             [class.negative]="wechselgeld < 0 && givenCents > 0">
@@ -169,7 +192,7 @@
             </span>
           </div>
 
-          <!-- KASSIEREN -->
+          <!-- KASSIEREN Button -->
           <button class="btn-kassieren" (click)="checkout()" [disabled]="!canKassieren">
             <span class="btn-icon">✓</span> KASSIEREN
           </button>
@@ -180,7 +203,7 @@
     </aside>
   </div>
 
-  <!-- Letzte Verkäufe Panel -->
+  <!-- ─── LETZTE VERKÄUFE — aufklappbares Panel ─── -->
   @if (showSales) {
     <section class="sales-section">
       <div class="sales-header">
@@ -215,4 +238,5 @@
       }
     </section>
   }
+
 }
