@@ -1,3 +1,4 @@
+import * as XLSX from 'xlsx';
 import { Component, Input, Output, EventEmitter, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Shift, ShiftsDbService } from '../core/shifts-db.service';
@@ -51,19 +52,21 @@ import jsPDF from 'jspdf';
           }
         </div>
 
-        <!-- Buttons: CSV + PDF + Neue Kassenschicht in einer Reihe -->
-        <div class="summary-actions">
-          <button class="btn-export-csv" (click)="exportCSV()">
-            ↓ CSV
-          </button>
-          <button class="btn-export-pdf" (click)="exportPDF()">
-            ↓ PDF
-          </button>
-          <button class="btn-new-shift" (click)="onNewShift()">
-            ▶ Neue Kassenschicht
-          </button>
-        </div>
-
+       <!-- ─── EXPORT BUTTONS ────────────────────────── -->
+<div class="summary-actions">
+  <button class="btn-export-csv" (click)="exportCSV()">
+    ↓ CSV
+  </button>
+  <button class="btn-export-pdf" (click)="exportPDF()">
+    ↓ PDF
+  </button>
+  <button class="btn-export-csv" (click)="exportExcel()">
+    ↓ Excel
+  </button>
+  <button class="btn-new-shift" (click)="onNewShift()">
+    ▶ Neue Kassenschicht
+  </button>
+</div>
         <!-- ─────────────────────────────────────────
            VERLAUF ALLER KASSENSCHICHTEN
            Zeigt alle vergangenen Kassenschichten
@@ -261,6 +264,49 @@ export class ShiftSummaryComponent implements OnInit {
 
     doc.save(`kassenschicht_${this.formatFileDate(this.shift.openedAt)}.pdf`);
   }
+
+
+// ─── EXCEL EXPORTIEREN ─────────────────────────────
+exportExcel() {
+  // ─── Hoja 1: Zusammenfassung ───────────────────
+  const summary = [
+    ['POS Show — Kassenschicht Abschluss'],
+    [],
+    ['Show', this.shift.showName ?? '—'],
+    ['Geöffnet', this.formatDateTime(this.shift.openedAt)],
+    ['Geschlossen', this.formatDateTime(this.shift.closedAt!)],
+    ['Gesamtumsatz', this.shift.totalCents / 100],
+    ['Anzahl Verkäufe', this.shift.orderIds.length],
+    [],
+    ['Artikel', 'Menge', 'Umsatz (€)'],
+    ...this.productSummary.map(p => [p.name, p.qty, p.totalCents / 100]),
+  ];
+
+  // ─── Hoja 2: Einzelne Verkäufe ─────────────────
+  const orders = [
+    ['Zeit', 'Artikel', 'Gesamt (€)'],
+    ...this.orders.map(o => [
+      this.formatDateTime(o.timestamp),
+      o.items.map((i: any) => i.name).join(', '),
+      o.totalCents / 100,
+    ]),
+  ];
+
+  // ─── Workbook erstellen ────────────────────────
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.aoa_to_sheet(summary);
+  const ws2 = XLSX.utils.aoa_to_sheet(orders);
+
+  // ─── Spaltenbreiten setzen ─────────────────────
+  ws1['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 15 }];
+  ws2['!cols'] = [{ wch: 22 }, { wch: 40 }, { wch: 15 }];
+
+  XLSX.utils.book_append_sheet(wb, ws1, 'Zusammenfassung');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Verkäufe');
+
+  // ─── Datei speichern ──────────────────────────
+  XLSX.writeFile(wb, `kassenschicht_${this.shift.showName ?? 'export'}_${this.formatFileDate(this.shift.openedAt)}.xlsx`);
+}
 
   // ─── DATUM FORMATIEREN — z.B. "18:32 • 05.03.2026" ─
   formatDateTime(timestamp: number): string {
