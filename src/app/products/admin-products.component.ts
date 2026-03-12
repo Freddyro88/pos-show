@@ -1,43 +1,204 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { ProductService } from './product.service';
 import { Product } from './product.model';
+import { SidebarComponent } from '../shared/sidebar.component';
 
 type Category = 'bebidas' | 'comida' | 'otros';
 type SortMode = 'name-asc' | 'name-desc' | 'usage-desc' | 'usage-asc';
-
-// Extiende tu Product sin obligarte a tocar el modelo ahora
-type AdminProduct = Product & {
-  category?: Category;
-  usageCount?: number; // si no existe en tu data, queda en 0 y el sort por uso no tendrá efecto
-};
+type AdminProduct = Product & { category?: Category; usageCount?: number; };
 
 @Component({
   selector: 'app-admin-products',
   standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './admin-products.component.html',
+  imports: [CommonModule, FormsModule, RouterModule, SidebarComponent],
+  template: `
+    <!-- PIN Modal -->
+    <div class="overlay" *ngIf="!isAdmin">
+      <div class="dialog">
+        <h3 class="dialog-title">🔒 Admin — Produkte</h3>
+        <p class="dialog-text">Bitte PIN eingeben um fortzufahren.</p>
+        <input class="form-input" type="password" [(ngModel)]="pinInput"
+          placeholder="PIN" (keyup.enter)="enterAdmin()" style="margin-bottom:1rem" />
+        <div class="dialog-actions">
+          <button class="btn-confirm" (click)="enterAdmin()">Entsperren</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-shell" *ngIf="isAdmin">
+      <app-sidebar />
+
+      <div class="main-area">
+
+        <!-- Topbar -->
+        <div class="topbar">
+          <span class="topbar-title">Produktverwaltung</span>
+          <div class="topbar-actions">
+            <span class="topbar-badge">{{ visibleProducts.length }} Produkte</span>
+            <button class="topbar-btn topbar-btn-danger" (click)="exitAdmin()">🔒 Sperren</button>
+          </div>
+        </div>
+
+        <div class="page-content">
+
+          <!-- Neues Produkt -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Neues Produkt hinzufügen</span>
+            </div>
+            <div class="card-body">
+              <div class="form-row-4">
+                <div>
+                  <label class="form-label">Produktname</label>
+                  <input class="form-input" [(ngModel)]="newName" placeholder="z.B. Cola" />
+                </div>
+                <div>
+                  <label class="form-label">Preis (€)</label>
+                  <input class="form-input" [(ngModel)]="newPriceEUR"
+                    placeholder="3,00" inputmode="decimal" />
+                </div>
+                <div>
+                  <label class="form-label">Kategorie</label>
+                  <select class="form-select" [(ngModel)]="newCategory">
+                    @for (c of categories; track c.value) {
+                      <option [ngValue]="c.value">{{ c.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div style="display:flex;align-items:flex-end">
+                  <button class="btn-add" (click)="addProduct()" [disabled]="!canAddProduct">
+                    + Produkt hinzufügen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter + Suche -->
+          <div class="card">
+            <div class="card-body" style="padding:9px 13px">
+              <div class="filter-row">
+                <input class="form-input" style="max-width:220px"
+                  [(ngModel)]="search" placeholder="🔍 Suche..." />
+                <select class="form-select" style="max-width:160px" [(ngModel)]="categoryFilter">
+                  <option value="all">Alle Kategorien</option>
+                  @for (c of categories; track c.value) {
+                    <option [value]="c.value">{{ c.label }}</option>
+                  }
+                </select>
+                <select class="form-select" style="max-width:170px" [(ngModel)]="sortMode">
+                  <option value="name-asc">Name A → Z</option>
+                  <option value="name-desc">Name Z → A</option>
+                  <option value="usage-desc">Meist genutzt</option>
+                  <option value="usage-asc">Wenig genutzt</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Produktliste -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Produktliste</span>
+              <span class="chip-blue">{{ visibleProducts.length }} Einträge</span>
+            </div>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Produktname</th>
+                  <th>Preis</th>
+                  <th>Kategorie</th>
+                  <th>Nutzung</th>
+                  <th style="text-align:right">Aktionen</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of visibleProducts; track p.id) {
+                  <tr>
+                    <td>
+                      <input class="form-input" style="max-width:200px"
+                        [(ngModel)]="p.name"
+                        (ngModelChange)="validateProduct(p)" />
+                      <div *ngIf="errorsById[''+p.id]?.name"
+                        style="color:var(--red);font-size:10px;margin-top:2px">
+                        {{ errorsById[''+p.id]?.name }}
+                      </div>
+                    </td>
+                    <td>
+                      <input class="form-input" style="max-width:90px;text-align:right"
+                        [ngModel]="priceInputById[''+p.id] || ((p.priceCents||0)/100).toFixed(2).replace('.',',')"
+                        (ngModelChange)="onPriceInput(p, $event)"
+                        (blur)="onPriceBlur(p); validateProduct(p)"
+                        inputmode="decimal" placeholder="0,00" />
+                      <div *ngIf="errorsById[''+p.id]?.price"
+                        style="color:var(--red);font-size:10px;margin-top:2px">
+                        {{ errorsById[''+p.id]?.price }}
+                      </div>
+                    </td>
+                    <td>
+                      <select class="form-select" style="max-width:130px"
+                        [(ngModel)]="p.category" (change)="validateProduct(p)">
+                        <option [ngValue]="undefined">— Kategorie —</option>
+                        @for (c of categories; track c.value) {
+                          <option [ngValue]="c.value">{{ c.label }}</option>
+                        }
+                      </select>
+                    </td>
+                    <td>
+                      <span class="chip-gray" *ngIf="p.usageCount">{{ p.usageCount }}×</span>
+                      <span style="color:var(--text-light);font-size:11px" *ngIf="!p.usageCount">—</span>
+                    </td>
+                    <td style="text-align:right">
+                      <button class="btn-add"
+                        style="margin-right:6px;font-size:11px;padding:5px 10px"
+                        (click)="updateProduct(p)"
+                        [disabled]="hasErrors(p)">
+                        ✓ Speichern
+                      </button>
+                      <button
+                        style="background:transparent;border:1px solid rgba(229,57,53,0.3);color:var(--red);font-size:11px;padding:5px 10px;border-radius:5px;cursor:pointer;font-family:var(--font)"
+                        (click)="removeProduct(p)">
+                        ✕ Löschen
+                      </button>
+                    </td>
+                  </tr>
+                }
+                <tr *ngIf="visibleProducts.length === 0">
+                  <td colspan="5" style="color:var(--text-light);font-style:italic;padding:1rem">
+                    Keine Produkte gefunden
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  `,
+  styles: [`:host { display:block; }
+    .form-row-4 { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+    .filter-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  `]
 })
 export class AdminProductsComponent {
-  // ===== Admin gate =====
+
   isAdmin = false;
   pinInput = '';
   private readonly ADMIN_PIN = '1234';
 
-  // Si AÚN tienes Math/Number en el template, esto evita el error TS2339
   readonly Math = Math;
   readonly Number = Number;
 
-  // ===== Form fields (nuevo producto) =====
   newName = '';
   newPriceEUR = '';
   newCategory: Category = 'otros';
 
-  // ===== Data =====
   products: AdminProduct[] = [];
 
-  // ===== UX Admin: filtros / orden =====
   categories: Array<{ value: Category; label: string }> = [
     { value: 'bebidas', label: 'Bebidas' },
     { value: 'comida', label: 'Comida' },
@@ -47,8 +208,6 @@ export class AdminProductsComponent {
   categoryFilter: Category | 'all' = 'all';
   search = '';
   sortMode: SortMode = 'name-asc';
-
-  // ===== UX Admin: edición precio como string + errores por producto =====
   priceInputById: Record<string, string> = {};
   errorsById: Record<string, { name?: string; price?: string; category?: string }> = {};
 
@@ -56,26 +215,15 @@ export class AdminProductsComponent {
     this.refresh();
   }
 
-  // ===== Admin gate =====
   enterAdmin() {
-    if (this.pinInput === this.ADMIN_PIN) {
-      this.isAdmin = true;
-      this.pinInput = '';
-    } else {
-      alert('Falsche PIN');
-    }
+    if (this.pinInput === this.ADMIN_PIN) { this.isAdmin = true; this.pinInput = ''; }
+    else { alert('Falsche PIN'); }
   }
 
-  exitAdmin() {
-    this.isAdmin = false;
-  }
+  exitAdmin() { this.isAdmin = false; }
 
-  // ===== Data load =====
   refresh() {
-    // el service devuelve Product[], lo tratamos como AdminProduct[] sin romper
     this.products = this.productService.getAll() as AdminProduct[];
-
-    // inicializa inputs de precio para edición cómoda
     for (const p of this.products) {
       const id = this.idOf(p);
       if (!(id in this.priceInputById)) {
@@ -84,187 +232,93 @@ export class AdminProductsComponent {
     }
   }
 
-  // ===== Listado visible (filtrado + ordenado) =====
   get visibleProducts(): AdminProduct[] {
-    const list = [...(this.products ?? [])];
-
     const q = this.search.trim().toLowerCase();
-    const filtered = list.filter((p) => {
+    const filtered = [...(this.products ?? [])].filter(p => {
       const byCat = this.categoryFilter === 'all' ? true : p.category === this.categoryFilter;
       const bySearch = !q ? true : (p.name ?? '').toLowerCase().includes(q);
       return byCat && bySearch;
     });
-
-    const byName = (a: AdminProduct, b: AdminProduct) =>
-      (a.name ?? '').localeCompare(b.name ?? '', 'de-AT');
-
-    const byUsage = (a: AdminProduct, b: AdminProduct) =>
-      (a.usageCount ?? 0) - (b.usageCount ?? 0);
-
+    const byName = (a: AdminProduct, b: AdminProduct) => (a.name ?? '').localeCompare(b.name ?? '', 'de-AT');
+    const byUsage = (a: AdminProduct, b: AdminProduct) => (a.usageCount ?? 0) - (b.usageCount ?? 0);
     switch (this.sortMode) {
-      case 'name-asc':
-        return filtered.sort(byName);
-      case 'name-desc':
-        return filtered.sort((a, b) => -byName(a, b));
-      case 'usage-asc':
-        return filtered.sort(byUsage);
-      case 'usage-desc':
-        return filtered.sort((a, b) => -byUsage(a, b));
-      default:
-        return filtered;
+      case 'name-asc':  return filtered.sort(byName);
+      case 'name-desc': return filtered.sort((a, b) => -byName(a, b));
+      case 'usage-asc': return filtered.sort(byUsage);
+      case 'usage-desc':return filtered.sort((a, b) => -byUsage(a, b));
+      default: return filtered;
     }
   }
 
-  trackByProduct = (_: number, p: AdminProduct) => this.idOf(p);
-
   get canAddProduct(): boolean {
-  const nameOk = this.newName.trim().length > 0;
-  const cents = this.parseMoneyToCents(this.newPriceEUR);
-  const priceOk = cents !== null && cents > 0;
-  return nameOk && priceOk;
-}
+    const cents = this.parseMoneyToCents(this.newPriceEUR);
+    return this.newName.trim().length > 0 && cents !== null && cents > 0;
+  }
 
-
-  // ===== CRUD: Add =====
   addProduct() {
     const name = this.newName.trim();
     const cents = this.parseMoneyToCents(this.newPriceEUR);
-
-    if (!name) {
-      alert('Name fehlt');
-      return;
-    }
-    if (cents === null || cents <= 0) {
-      alert('Preis ungültig');
-      return;
-    }
-
-    const product: AdminProduct = {
-      id: this.productService.generateId(name),
-      name,
-      priceCents: cents,
-      category: this.newCategory,
-      usageCount: 0,
-    };
-
-    this.productService.add(product); // AdminProduct es asignable a Product
-    this.newName = '';
-    this.newPriceEUR = '';
-    this.newCategory = 'otros';
+    if (!name || cents === null || cents <= 0) return;
+    this.productService.add({ id: this.productService.generateId(name), name, priceCents: cents, category: this.newCategory, usageCount: 0 });
+    this.newName = ''; this.newPriceEUR = ''; this.newCategory = 'otros';
     this.refresh();
   }
 
-  // ===== CRUD: Update (con validación) =====
   updateProduct(p: AdminProduct) {
     if (!this.validateProduct(p)) return;
-
     this.productService.update(p);
     this.refresh();
   }
 
-  // ===== CRUD: Remove (con confirmación) =====
   removeProduct(p: AdminProduct) {
-  const name = (p.name ?? '').trim() || 'dieses Produkt';
-  const ok = window.confirm(`Sicher löschen: "${name}"? Diese Aktion kann nicht rückgängig gemacht werden.`);
-  if (!ok) return;
-
-  this.productService.remove(p.id);
-  this.refresh();
-}
-
-
-  // Alternativa si quieres el texto “más seguro”
-  confirmDelete(p: AdminProduct) {
     const name = (p.name ?? '').trim() || 'dieses Produkt';
-    const ok = window.confirm(`Sicher löschen: ${name}? Diese Aktion kann nicht rückgängig gemacht werden.`);
-    if (!ok) return;
+    if (!window.confirm(`Sicher löschen: "${name}"?`)) return;
     this.productService.remove(p.id);
     this.refresh();
   }
 
-  // ===== Validación básica =====
   validateProduct(p: AdminProduct): boolean {
     const id = this.idOf(p);
-
-    const name = (p.name ?? '').trim();
-    const price = p.priceCents;
-
-    const errs: { name?: string; price?: string; category?: string } = {};
-
-    if (!name) errs.name = 'Name darf nicht leer sein.';
-    if (!Number.isFinite(price) || (price as number) <= 0) errs.price = 'Preis ungültig (muss > 0 sein).';
-    if (p.category && !['bebidas', 'comida', 'otros'].includes(p.category)) errs.category = 'Kategorie ungültig.';
-
+    const errs: { name?: string; price?: string } = {};
+    if (!(p.name ?? '').trim()) errs.name = 'Name darf nicht leer sein.';
+    if (!Number.isFinite(p.priceCents) || (p.priceCents as number) <= 0) errs.price = 'Preis ungültig.';
     this.errorsById[id] = errs;
     return Object.keys(errs).length === 0;
   }
 
   hasErrors(p: AdminProduct): boolean {
-    const id = this.idOf(p);
-    const errs = this.errorsById[id];
+    const errs = this.errorsById[this.idOf(p)];
     return !!errs && Object.keys(errs).length > 0;
   }
 
-  // ===== Precio: input UX (evita Math/Number en HTML) =====
   onPriceInput(p: AdminProduct, raw: any) {
     const id = this.idOf(p);
     this.priceInputById[id] = String(raw ?? '');
-
     const cents = this.parseMoneyToCents(this.priceInputById[id]);
-    if (cents === null) {
-      this.errorsById[id] = { ...(this.errorsById[id] ?? {}), price: 'Preis ungültig.' };
-      return;
-    }
-
+    if (cents === null) { this.errorsById[id] = { ...(this.errorsById[id] ?? {}), price: 'Preis ungültig.' }; return; }
     p.priceCents = cents;
-
-    // Limpia error de precio si ahora es válido
-    const prev = this.errorsById[id] ?? {};
-    const { price, ...rest } = prev;
+    const { price, ...rest } = this.errorsById[id] ?? {};
     this.errorsById[id] = rest;
-
-    this.validateProduct(p);
   }
 
   onPriceBlur(p: AdminProduct) {
-    const id = this.idOf(p);
-    this.priceInputById[id] = this.formatCentsToMoney(p.priceCents ?? 0);
+    this.priceInputById[this.idOf(p)] = this.formatCentsToMoney(p.priceCents ?? 0);
   }
 
-  // ===== Formatos =====
   formatEUR(cents: number): string {
-    return new Intl.NumberFormat('de-AT', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format((cents ?? 0) / 100);
+    return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format((cents ?? 0) / 100);
   }
 
-  // Para input (sin símbolo €, más simple de editar)
   private formatCentsToMoney(cents: number): string {
-    const v = (cents ?? 0) / 100;
-    return v.toFixed(2).replace('.', ',');
+    return ((cents ?? 0) / 100).toFixed(2).replace('.', ',');
   }
 
-  // Acepta: "3", "3.5", "3,5", "€ 3,50", "1.234,56"
   private parseMoneyToCents(input: string): number | null {
-    let s = (input ?? '').trim();
-    if (!s) return null;
-
-    s = s.replace(/[€\s]/g, ''); // quita € y espacios
-    s = s.replace(/\./g, '');    // quita separador de miles (europeo)
-    s = s.replace(',', '.');     // decimal coma -> punto
-
-    // número con hasta 2 decimales
-    if (!/^\d+(\.\d{0,2})?$/.test(s)) return null;
-
+    let s = (input ?? '').trim().replace(/[€\s]/g, '').replace(/\./g, '').replace(',', '.');
+    if (!s || !/^\d+(\.\d{0,2})?$/.test(s)) return null;
     const n = Number(s);
-    if (!Number.isFinite(n)) return null;
-
-    return Math.round(n * 100);
+    return Number.isFinite(n) ? Math.round(n * 100) : null;
   }
 
-  private idOf(p: AdminProduct): string {
-    return String(p.id);
-  }
+  private idOf(p: AdminProduct): string { return String(p.id); }
 }
-
