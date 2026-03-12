@@ -1,4 +1,4 @@
-<!-- ─── PIN MODAL ─────────────────────────────────── -->
+<!-- ─── ADMIN PIN MODAL (cerrar turno) ───────────── -->
 @if (showPinModal) {
   <app-pin-modal
     [mode]="pinModalMode"
@@ -8,7 +8,7 @@
   </app-pin-modal>
 }
 
-<!-- ─── KASSENSCHICHT GESCHLOSSEN ─────────────────── -->
+<!-- ─── RESUMEN KASSENSCHICHT CERRADA ─────────────── -->
 @if (closedShift) {
   <app-shift-summary
     [shift]="closedShift"
@@ -16,36 +16,112 @@
     (newShift)="openShift()">
   </app-shift-summary>
 
-<!-- ─── KEINE KASSENSCHICHT AKTIV ─────────────────── -->
-} @else if (!activeShift) {
-  <div class="shift-screen">
-    <div class="shift-box">
-      <div class="shift-icon">🎭</div>
-      <h1 class="shift-title">POS Show</h1>
-      <p class="shift-subtitle">Keine offene Kassenschicht</p>
+<!-- ─── PASO 1: SELECCIONAR SHOW ─────────────────── -->
+} @else if (step === 'select-show') {
+  <div class="start-screen">
+    <div class="start-header">
+      <span class="brand-logo">🎭 POS Show</span>
+    </div>
 
-      <!-- Kein Show vorhanden → zum Admin weiterleiten -->
-      @if (shows.length === 0) {
-        <p class="shift-no-shows">
-          Keine Shows vorhanden.<br>
-          Bitte zuerst im Admin einen Show erstellen.
-        </p>
-        <button class="btn-open-shift btn-goto-admin" routerLink="/shows">
-          🎭 Shows verwalten
-        </button>
+    @if (shows.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🎭</div>
+        <h2 class="empty-title">Keine Shows vorhanden</h2>
+        <p class="empty-sub">Bitte zuerst eine Show erstellen.</p>
+        <button class="btn-goto" routerLink="/shows">Shows verwalten →</button>
+      </div>
+    } @else {
+      <h2 class="start-title">Show auswählen</h2>
+      <div class="cards-grid">
+        @for (show of shows; track show.id) {
+          <button class="show-card" (click)="selectShow(show)">
+            <span class="show-card-icon">🎭</span>
+            <span class="show-card-name">{{ show.name }}</span>
+          </button>
+        }
+      </div>
+      <div class="start-footer">
+        <button class="btn-admin-link" routerLink="/shows">Shows verwalten</button>
+        <button class="btn-admin-link" routerLink="/users">👤 Benutzer</button>
+        <button class="btn-admin-link" routerLink="/dashboard">📊 Dashboard</button>
+      </div>
+    }
+  </div>
 
-      <!-- Shows vorhanden → Dropdown + Kassenschicht öffnen -->
-      } @else {
-        <select class="show-select" [(ngModel)]="selectedShowId">
-          @for (s of shows; track s.id) {
-            <option [value]="s.id">{{ s.name }}</option>
-          }
-        </select>
-        <button class="btn-open-shift" (click)="openShift()">
-          ▶ Kassenschicht öffnen
-        </button>
+<!-- ─── PASO 2: SELECCIONAR USUARIO ──────────────── -->
+} @else if (step === 'select-user') {
+  <div class="start-screen">
+    <div class="start-header">
+      <button class="btn-back" (click)="backToShows()">← Zurück</button>
+      <span class="brand-logo">🎭 {{ selectedShow?.name }}</span>
+    </div>
+
+    @if (users.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">👤</div>
+        <h2 class="empty-title">Keine Benutzer vorhanden</h2>
+        <p class="empty-sub">Bitte zuerst Benutzer erstellen.</p>
+        <button class="btn-goto" routerLink="/users">Benutzer verwalten →</button>
+      </div>
+    } @else {
+      <h2 class="start-title">Wer kassiert?</h2>
+      <div class="cards-grid">
+        @for (user of users; track user.id) {
+          <button class="user-card" (click)="selectUser(user)">
+            <span class="user-card-avatar">{{ user.name.charAt(0).toUpperCase() }}</span>
+            <span class="user-card-name">{{ user.name }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+<!-- ─── PASO 3: PIN DEL USUARIO ───────────────────── -->
+} @else if (step === 'verify-pin') {
+  <div class="start-screen">
+    <div class="start-header">
+      <button class="btn-back" (click)="backToUsers()">← Zurück</button>
+      <span class="brand-logo">🎭 {{ selectedShow?.name }}</span>
+    </div>
+
+    <div class="pin-screen">
+      <div class="pin-avatar">{{ selectedUser?.name?.charAt(0)?.toUpperCase() }}</div>
+      <h2 class="pin-name">{{ selectedUser?.name }}</h2>
+      <p class="pin-label">PIN eingeben</p>
+
+      <!-- PIN Dots -->
+      <div class="pin-dots">
+        @for (i of [0,1,2,3]; track i) {
+          <div class="pin-dot" [class.filled]="pinInput.length > i"></div>
+        }
+      </div>
+
+      @if (pinError) {
+        <p class="pin-error">{{ pinError }}</p>
       }
 
+      <!-- PIN Numpad -->
+      <div class="pin-numpad">
+        @for (key of ['1','2','3','4','5','6','7','8','9','','0','⌫']; track key) {
+          @if (key === '') {
+            <div class="pin-key-empty"></div>
+          } @else {
+            <button
+              class="pin-key"
+              [class.pin-key-del]="key === '⌫'"
+              (click)="pressPinKey(key)">
+              {{ key }}
+            </button>
+          }
+        }
+      </div>
+
+      <button
+        class="btn-confirm-pin"
+        (click)="confirmPin()"
+        [disabled]="pinInput.length < 4">
+        ▶ Kassenschicht öffnen
+      </button>
     </div>
   </div>
 
@@ -53,9 +129,7 @@
 } @else {
   <div class="pos-layout">
 
-    <!-- ══════════════════════════════════════════════
-         PANEL LINKS — Produkte
-    ══════════════════════════════════════════════ -->
+    <!-- PANEL LINKS — Produkte -->
     <section class="products-panel">
       <div class="panel-header">
         <span class="brand">POS Show</span>
@@ -71,30 +145,28 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════
-         PANEL RECHTS — Checkout + Numpad
-    ══════════════════════════════════════════════ -->
+    <!-- PANEL RECHTS — Checkout + Numpad -->
     <aside class="checkout-panel">
 
-      <!-- Shift Info Bar — zeigt Show-Name + Öffnungszeit -->
+      <!-- Shift Info Bar -->
       <div class="shift-info">
         <span class="shift-label">
-          🎭 {{ activeShift.showName }} &nbsp;·&nbsp;
-          ● offen seit {{ formatDateTime(activeShift.openedAt) }}
+          🎭 {{ activeShift?.showName }} &nbsp;·&nbsp;
+          👤 {{ activeShift?.userName }} &nbsp;·&nbsp;
+          ● seit {{ formatDateTime(activeShift!.openedAt) }}
         </span>
         <div>
-          <button class="btn-dashboard" routerLink="/dashboard">📊 Dashboard</button>
+          <button class="btn-dashboard" routerLink="/dashboard">📊</button>
           <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
         </div>
       </div>
 
-      <!-- ─── HAUPTBEREICH: Artikel links + Numpad rechts ─── -->
+      <!-- HAUPTBEREICH: Artikel + Numpad -->
       <div class="checkout-main">
 
-        <!-- LINKE SEITE — Total + Artikel + Aktionen -->
+        <!-- LINKE SEITE -->
         <div class="checkout-left">
 
-          <!-- Total -->
           <div class="total-section">
             <div class="total-label">Gesamt</div>
             <div class="total-amount" [class.has-items]="currentOrder.length > 0">
@@ -109,7 +181,6 @@
             </div>
           </div>
 
-          <!-- Artikel Liste -->
           @if (currentOrder.length > 0) {
             <div class="current-items">
               @for (g of summarizeItems(currentOrder); track $index) {
@@ -125,7 +196,6 @@
 
           <div class="spacer"></div>
 
-          <!-- STORNO + LEEREN -->
           <div class="btn-row">
             <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
               ↩ STORNO
@@ -135,17 +205,15 @@
             </button>
           </div>
 
-          <!-- Letzte Verkäufe Toggle -->
           <button class="btn-history" (click)="toggleSales()">
             {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
           </button>
 
         </div>
 
-        <!-- RECHTE SEITE — Numpad + Wechselgeld + Kassieren -->
+        <!-- RECHTE SEITE — Numpad -->
         <div class="checkout-right">
 
-          <!-- Gegeben Display -->
           <div class="given-display">
             <div class="given-label">Gegeben</div>
             <div class="given-amount" [class.empty]="givenCents === 0">
@@ -153,7 +221,6 @@
             </div>
           </div>
 
-          <!-- Schnellbeträge — Scheine -->
           <div class="quick-btns">
             @for (a of quickAmounts; track a) {
               <button class="quick-btn"
@@ -169,7 +236,6 @@
             </button>
           </div>
 
-          <!-- Numpad -->
           <div class="numpad">
             @for (key of keys; track key) {
               <button class="numpad-btn"
@@ -180,7 +246,6 @@
             }
           </div>
 
-          <!-- Wechselgeld Anzeige -->
           <div class="wechselgeld-box"
             [class.positive]="wechselgeld > 0"
             [class.negative]="wechselgeld < 0 && givenCents > 0">
@@ -192,7 +257,6 @@
             </span>
           </div>
 
-          <!-- KASSIEREN Button -->
           <button class="btn-kassieren" (click)="checkout()" [disabled]="!canKassieren">
             <span class="btn-icon">✔</span> KASSIEREN
           </button>
@@ -203,7 +267,6 @@
     </aside>
   </div>
 
-  <!-- ─── LETZTE VERKÄUFE — aufklappbares Panel ─── -->
   @if (showSales) {
     <section class="sales-section">
       <div class="sales-header">
@@ -238,5 +301,260 @@
       }
     </section>
   }
-
 }
+
+<!-- ─── ESTILOS DE LAS PANTALLAS DE INICIO ────────── -->
+<style>
+  .start-screen {
+    min-height: 100vh;
+    background: #0f0f1a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .start-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem 1.5rem;
+    background: #12121f;
+    border-bottom: 1px solid #1e1e3a;
+    position: relative;
+  }
+  .brand-logo {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #7c6fff;
+  }
+  .btn-back {
+    position: absolute;
+    left: 1.5rem;
+    background: transparent;
+    border: 1px solid #333355;
+    color: #aaaacc;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .btn-back:hover { border-color: #7c6fff; color: #e0e0ff; }
+
+  .start-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #e0e0ff;
+    margin: 2.5rem 0 1.5rem;
+    text-align: center;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    max-width: 800px;
+    padding: 0 1.5rem;
+  }
+
+  .show-card {
+    background: #1a1a2e;
+    border: 2px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 2rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #e0e0ff;
+  }
+  .show-card:hover {
+    border-color: #7c6fff;
+    background: rgba(124,111,255,0.1);
+    transform: translateY(-2px);
+  }
+  .show-card-icon { font-size: 2.5rem; }
+  .show-card-name {
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    color: #e0e0ff;
+  }
+
+  .user-card {
+    background: #1a1a2e;
+    border: 2px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 1.8rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #e0e0ff;
+  }
+  .user-card:hover {
+    border-color: #7c6fff;
+    background: rgba(124,111,255,0.1);
+    transform: translateY(-2px);
+  }
+  .user-card-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c6fff, #5a4fcc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+  }
+  .user-card-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e0e0ff;
+  }
+
+  /* PIN Screen */
+  .pin-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1.5rem;
+    width: 100%;
+    max-width: 360px;
+  }
+  .pin-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c6fff, #5a4fcc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.8rem;
+  }
+  .pin-name {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #e0e0ff;
+    margin: 0 0 0.3rem;
+  }
+  .pin-label {
+    font-size: 0.85rem;
+    color: #888aaa;
+    margin: 0 0 1.2rem;
+  }
+  .pin-dots {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  .pin-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #3a3a6a;
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .pin-dot.filled {
+    background: #7c6fff;
+    border-color: #7c6fff;
+  }
+  .pin-error {
+    color: #ff6b6b;
+    font-size: 0.82rem;
+    margin: 0 0 0.8rem;
+  }
+  .pin-numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    width: 100%;
+    margin-bottom: 1.2rem;
+  }
+  .pin-key {
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    color: #e0e0ff;
+    padding: 1rem;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pin-key:hover { background: #252545; border-color: #7c6fff; }
+  .pin-key:active { transform: scale(0.95); }
+  .pin-key-del { color: #ff6b6b; }
+  .pin-key-empty { background: transparent; border: none; }
+  .btn-confirm-pin {
+    width: 100%;
+    background: #7c6fff;
+    border: none;
+    color: white;
+    padding: 0.9rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-confirm-pin:hover:not(:disabled) { background: #6a5fdd; }
+  .btn-confirm-pin:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Empty state */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+    margin-top: 3rem;
+    padding: 0 1.5rem;
+    text-align: center;
+  }
+  .empty-icon { font-size: 3rem; }
+  .empty-title { font-size: 1.2rem; font-weight: 700; color: #e0e0ff; margin: 0; }
+  .empty-sub { font-size: 0.88rem; color: #888aaa; margin: 0; }
+  .btn-goto {
+    background: #7c6fff;
+    border: none;
+    color: white;
+    padding: 0.7rem 1.4rem;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+
+  /* Footer links */
+  .start-footer {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding-bottom: 2rem;
+  }
+  .btn-admin-link {
+    background: transparent;
+    border: 1px solid #2a2a4a;
+    color: #888aaa;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-admin-link:hover { border-color: #7c6fff; color: #e0e0ff; }
+</style>
