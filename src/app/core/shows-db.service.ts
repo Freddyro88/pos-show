@@ -9,11 +9,12 @@ export type Show = {
 @Injectable({ providedIn: 'root' })
 export class ShowsDbService {
 
-  private readonly DB_NAME    = 'pos_show_db';
-  private readonly DB_VERSION = 3;
+  private readonly DB_NAME     = 'pos_show_db';
+  private readonly DB_VERSION  = 4;
   private readonly SHOWS_STORE  = 'shows';
   private readonly ORDERS_STORE = 'orders';
   private readonly SHIFTS_STORE = 'shifts';
+  private readonly USERS_STORE  = 'users';
 
   private dbPromise: Promise<IDBDatabase> | null = null;
 
@@ -31,6 +32,9 @@ export class ShowsDbService {
         }
         if (!db.objectStoreNames.contains(this.SHOWS_STORE)) {
           db.createObjectStore(this.SHOWS_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(this.USERS_STORE)) {
+          db.createObjectStore(this.USERS_STORE, { keyPath: 'id' });
         }
       };
       request.onsuccess = () => resolve(request.result);
