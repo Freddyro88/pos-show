@@ -44,15 +44,6 @@ export class PosComponent implements OnInit {
   pinActionLabel = '';
   pendingPinAction: PinAction = null;
 
-  // ─── SHOWS ─────────────────────────────────────────
-  shows: Show[] = [];
-  selectedShowId: string = '';
-
-  // ─── NUMPAD — Wechselgeld ──────────────────────────
-  numpadInput: string = '';
-  quickAmounts = [5, 10, 20, 50];
-  keys = ['1','2','3','4','5','6','7','8','9',',','0','⌫'];
-
   constructor(
     private productService: ProductService,
     private ordersDb: OrdersDbService,
@@ -68,10 +59,6 @@ export class PosComponent implements OnInit {
     this.activeShift = await this.shiftsDb.getActiveShift();
     if (this.activeShift) {
       await this.loadOrdersForShift(this.activeShift.id);
-    }
-    this.shows = await this.showsDb.getAllShows();
-    if (this.shows.length > 0) {
-      this.selectedShowId = this.shows[0].id;
     }
     this.cdr.detectChanges();
   }
@@ -102,7 +89,8 @@ export class PosComponent implements OnInit {
       this.showPinModal = true;
       this.cdr.detectChanges();
     } catch (e) {
-      console.error('PIN service error:', e);
+      console.error('❌ PIN service error:', e);
+      // Fallback: ejecutar sin PIN
       if (action === 'open-shift') await this._doOpenShift();
       else if (action === 'close-shift') await this._doCloseShift();
     }
@@ -124,7 +112,6 @@ export class PosComponent implements OnInit {
   }
 
   private async _doOpenShift() {
-    const selected = this.shows.find(s => s.id === this.selectedShowId);
     const shift: Shift = {
       id: crypto.randomUUID(),
       openedAt: Date.now(),
@@ -154,6 +141,52 @@ export class PosComponent implements OnInit {
     this.closedShift = this.activeShift;
     this.activeShift = null;
     this.cdr.detectChanges();
+  }
+
+  // ─── NUMPAD LOGIK ─────────────────────────────────
+  pressKey(key: string) {
+    if (key === '⌫') {
+      this.numpadInput = this.numpadInput.slice(0, -1);
+      return;
+    }
+    if (key === ',') {
+      if (this.numpadInput.includes(',')) return;
+      this.numpadInput += ',';
+      return;
+    }
+    if (this.numpadInput.includes(',')) {
+      const decimals = this.numpadInput.split(',')[1];
+      if (decimals && decimals.length >= 2) return;
+    }
+    const beforeComma = this.numpadInput.split(',')[0];
+    if (!this.numpadInput.includes(',') && beforeComma.length >= 4) return;
+    this.numpadInput += key;
+  }
+
+  setQuickAmount(cents: number) {
+    const euros = cents / 100;
+    this.numpadInput = Number.isInteger(euros)
+      ? euros.toString()
+      : euros.toFixed(2).replace('.', ',');
+  }
+
+  setPassend() {
+    this.setQuickAmount(this.currentTotalCents);
+  }
+
+  get givenCents(): number {
+    if (!this.numpadInput) return 0;
+    const val = parseFloat(this.numpadInput.replace(',', '.'));
+    if (isNaN(val)) return 0;
+    return Math.round(val * 100);
+  }
+
+  get wechselgeld(): number {
+    return this.givenCents - this.currentTotalCents;
+  }
+
+  get canKassieren(): boolean {
+    return this.currentOrder.length > 0 && this.givenCents >= this.currentTotalCents;
   }
 
   // ─── NUMPAD LOGIK ──────────────────────────────────
