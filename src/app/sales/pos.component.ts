@@ -1,6 +1,8 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
+
 import { Product } from '../products/product.model';
 import { ProductService } from '../products/product.service';
 import { OrdersDbService, StoredOrder } from '../core/orders-db.service';
@@ -8,9 +10,10 @@ import { ShiftsDbService, Shift } from '../core/shifts-db.service';
 import { ShowsDbService, Show } from '../core/shows-db.service';
 import { UsersDbService, User } from '../core/users-db.service';
 import { PinService } from '../core/pin.service';
+
 import { ShiftSummaryComponent } from './shift-summary.component';
 import { PinModalComponent } from '../shared/pin-modal.component';
-import { RouterModule } from '@angular/router';
+import { SidebarComponent } from '../shared/sidebar.component'; // adjust path if needed
 
 type Order = {
   id: string;
@@ -27,11 +30,17 @@ type PosStep = 'select-show' | 'select-user' | 'verify-pin' | 'active';
 @Component({
   selector: 'app-pos',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ShiftSummaryComponent, PinModalComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    ShiftSummaryComponent,
+    PinModalComponent,
+    SidebarComponent
+  ],
   templateUrl: './pos.component.html',
 })
 export class PosComponent implements OnInit {
-
   products: Product[] = [];
   currentOrder: Product[] = [];
   expandedOrderId: string | null = null;
@@ -58,9 +67,9 @@ export class PosComponent implements OnInit {
   pinActionLabel = '';
 
   // ─── NUMPAD — Wechselgeld ──────────────────────────
-  numpadInput: string = '';
+  numpadInput = '';
   quickAmounts = [5, 10, 20, 50];
-  keys = ['1','2','3','4','5','6','7','8','9',',','0','⌫'];
+  keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', '⌫'];
 
   constructor(
     private productService: ProductService,
@@ -76,6 +85,7 @@ export class PosComponent implements OnInit {
 
   async ngOnInit() {
     this.activeShift = await this.shiftsDb.getActiveShift();
+
     if (this.activeShift) {
       await this.loadOrdersForShift(this.activeShift.id);
       this.step = 'active';
@@ -84,6 +94,7 @@ export class PosComponent implements OnInit {
       this.users = await this.usersDb.getAllUsers();
       this.step = 'select-show';
     }
+
     this.cdr.detectChanges();
   }
 
@@ -127,12 +138,14 @@ export class PosComponent implements OnInit {
     } else if (this.pinInput.length < 4) {
       this.pinInput += key;
     }
+
     this.pinError = '';
     this.cdr.detectChanges();
   }
 
   async confirmPin() {
     if (!this.selectedUser) return;
+
     if (this.pinInput === this.selectedUser.pin) {
       await this._doOpenShift();
     } else {
@@ -155,13 +168,16 @@ export class PosComponent implements OnInit {
       userId: this.selectedUser?.id ?? '',
       userName: this.selectedUser?.name ?? '',
     };
+
     await this.shiftsDb.saveShift(shift);
+
     this.activeShift = shift;
     this.closedShift = null;
     this.closedShiftOrders = [];
     this.orders = [];
     this.numpadInput = '';
     this.step = 'active';
+
     this.cdr.detectChanges();
   }
 
@@ -186,12 +202,15 @@ export class PosComponent implements OnInit {
 
   private async _doCloseShift() {
     if (!this.activeShift) return;
+
     this.activeShift.closedAt = Date.now();
     await this.shiftsDb.saveShift(this.activeShift);
+
     const allOrders = await this.ordersDb.getAllOrders();
     this.closedShiftOrders = allOrders.filter(
       o => (o as any).shiftId === this.activeShift!.id
     );
+
     this.closedShift = this.activeShift;
     this.activeShift = null;
     this.step = 'select-show';
@@ -199,6 +218,7 @@ export class PosComponent implements OnInit {
     this.selectedUser = null;
     this.shows = await this.showsDb.getAllShows();
     this.users = await this.usersDb.getAllUsers();
+
     this.cdr.detectChanges();
   }
 
@@ -208,17 +228,21 @@ export class PosComponent implements OnInit {
       this.numpadInput = this.numpadInput.slice(0, -1);
       return;
     }
+
     if (key === ',') {
       if (this.numpadInput.includes(',')) return;
       this.numpadInput += ',';
       return;
     }
+
     if (this.numpadInput.includes(',')) {
       const decimals = this.numpadInput.split(',')[1];
       if (decimals && decimals.length >= 2) return;
     }
+
     const beforeComma = this.numpadInput.split(',')[0];
     if (!this.numpadInput.includes(',') && beforeComma.length >= 4) return;
+
     this.numpadInput += key;
   }
 
@@ -235,8 +259,10 @@ export class PosComponent implements OnInit {
 
   get givenCents(): number {
     if (!this.numpadInput) return 0;
+
     const val = parseFloat(this.numpadInput.replace(',', '.'));
     if (isNaN(val)) return 0;
+
     return Math.round(val * 100);
   }
 
@@ -267,6 +293,7 @@ export class PosComponent implements OnInit {
   removeItem(productId: string) {
     const index = this.currentOrder.map(p => p.id).lastIndexOf(productId);
     if (index === -1) return;
+
     this.currentOrder = [
       ...this.currentOrder.slice(0, index),
       ...this.currentOrder.slice(index + 1),
@@ -285,6 +312,7 @@ export class PosComponent implements OnInit {
     this.bumpUsageFromCurrentOrder();
 
     const totalCents = this.currentOrder.reduce((sum, p) => sum + p.priceCents, 0);
+
     const order: Order = {
       id: crypto.randomUUID(),
       items: this.currentOrder,
@@ -313,9 +341,11 @@ export class PosComponent implements OnInit {
 
   private bumpUsageFromCurrentOrder() {
     const counts = new Map<string, number>();
+
     for (const p of this.currentOrder) {
       counts.set(p.id, (counts.get(p.id) ?? 0) + 1);
     }
+
     for (const [id, qty] of counts) {
       this.productService.incrementUsage(id, qty);
     }
@@ -331,28 +361,50 @@ export class PosComponent implements OnInit {
   }
 
   summarizeItems(items: Product[]) {
-    const map = new Map<string, { id: string; name: string; qty: number; lineTotalCents: number }>();
+    const map = new Map<
+      string,
+      { id: string; name: string; qty: number; lineTotalCents: number }
+    >();
+
     for (const item of items) {
       const existing = map.get(item.id);
+
       if (existing) {
         existing.qty += 1;
         existing.lineTotalCents += item.priceCents;
       } else {
-        map.set(item.id, { id: item.id, name: item.name, qty: 1, lineTotalCents: item.priceCents });
+        map.set(item.id, {
+          id: item.id,
+          name: item.name,
+          qty: 1,
+          lineTotalCents: item.priceCents,
+        });
       }
     }
+
     return Array.from(map.values());
   }
 
   formatDateTime(timestamp: number): string {
     const d = new Date(timestamp);
-    const time = d.toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' });
-    const date = d.toLocaleDateString('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const time = d.toLocaleTimeString('de-AT', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const date = d.toLocaleDateString('de-AT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
     return `${time} • ${date}`;
   }
 
   formatEUR(cents: number): string {
-    return new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
+    return new Intl.NumberFormat('de-AT', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(cents / 100);
   }
 
   // Para el openShift desde shift-summary
