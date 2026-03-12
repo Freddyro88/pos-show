@@ -1,4 +1,4 @@
-<!-- ─── ADMIN PIN MODAL (cerrar turno) ───────────── -->
+<!-- ─── ADMIN PIN MODAL ───────────────────────── -->
 @if (showPinModal) {
   <app-pin-modal
     [mode]="pinModalMode"
@@ -8,7 +8,7 @@
   </app-pin-modal>
 }
 
-<!-- ─── RESUMEN KASSENSCHICHT CERRADA ─────────────── -->
+<!-- ─── KASSENSCHICHT GESCHLOSSEN ─────────────── -->
 @if (closedShift) {
   <app-shift-summary
     [shift]="closedShift"
@@ -16,545 +16,668 @@
     (newShift)="openShift()">
   </app-shift-summary>
 
-<!-- ─── PASO 1: SELECCIONAR SHOW ─────────────────── -->
+<!-- ─── PASO 1: SELECCIONAR SHOW ─────────────── -->
 } @else if (step === 'select-show') {
-  <div class="start-screen">
-    <div class="start-header">
-      <span class="brand-logo">🎭 POS Show</span>
-    </div>
+  <div class="app-shell">
+    <app-sidebar />
+    <div class="main-area">
+      <div class="topbar">
+        <span class="topbar-title">🎭 Show auswählen</span>
+      </div>
+      <div class="page-content" style="align-items:center; justify-content:center;">
 
-    @if (shows.length === 0) {
-      <div class="empty-state">
-        <div class="empty-icon">🎭</div>
-        <h2 class="empty-title">Keine Shows vorhanden</h2>
-        <p class="empty-sub">Bitte zuerst eine Show erstellen.</p>
-        <button class="btn-goto" routerLink="/shows">Shows verwalten →</button>
-      </div>
-    } @else {
-      <h2 class="start-title">Show auswählen</h2>
-      <div class="cards-grid">
-        @for (show of shows; track show.id) {
-          <button class="show-card" (click)="selectShow(show)">
-            <span class="show-card-icon">🎭</span>
-            <span class="show-card-name">{{ show.name }}</span>
-          </button>
+        @if (shows.length === 0) {
+          <div class="empty-state-center">
+            <div style="font-size:3rem">🎭</div>
+            <h2 style="font-size:1.1rem;font-weight:700;color:var(--text-dark);margin:0">Keine Shows vorhanden</h2>
+            <p style="font-size:0.85rem;color:var(--text-light);margin:0">Bitte zuerst eine Show erstellen.</p>
+            <a class="btn-add" routerLink="/shows">Shows verwalten →</a>
+          </div>
+        } @else {
+          <div class="select-grid">
+            @for (show of shows; track show.id) {
+              <button class="select-card" (click)="selectShow(show)">
+                <span style="font-size:2.2rem">🎭</span>
+                <span class="select-card-name">{{ show.name }}</span>
+              </button>
+            }
+          </div>
         }
+
       </div>
-      <div class="start-footer">
-        <button class="btn-admin-link" routerLink="/shows">Shows verwalten</button>
-        <button class="btn-admin-link" routerLink="/users">👤 Benutzer</button>
-        <button class="btn-admin-link" routerLink="/dashboard">📊 Dashboard</button>
-      </div>
-    }
+    </div>
   </div>
 
-<!-- ─── PASO 2: SELECCIONAR USUARIO ──────────────── -->
+<!-- ─── PASO 2: SELECCIONAR USUARIO ──────────── -->
 } @else if (step === 'select-user') {
-  <div class="start-screen">
-    <div class="start-header">
-      <button class="btn-back" (click)="backToShows()">← Zurück</button>
-      <span class="brand-logo">🎭 {{ selectedShow?.name }}</span>
-    </div>
+  <div class="app-shell">
+    <app-sidebar />
+    <div class="main-area">
+      <div class="topbar">
+        <span class="topbar-title">👤 Wer kassiert? — {{ selectedShow?.name }}</span>
+        <div class="topbar-actions">
+          <button class="topbar-btn" (click)="backToShows()">← Zurück</button>
+        </div>
+      </div>
+      <div class="page-content" style="align-items:center; justify-content:center;">
 
-    @if (users.length === 0) {
-      <div class="empty-state">
-        <div class="empty-icon">👤</div>
-        <h2 class="empty-title">Keine Benutzer vorhanden</h2>
-        <p class="empty-sub">Bitte zuerst Benutzer erstellen.</p>
-        <button class="btn-goto" routerLink="/users">Benutzer verwalten →</button>
-      </div>
-    } @else {
-      <h2 class="start-title">Wer kassiert?</h2>
-      <div class="cards-grid">
-        @for (user of users; track user.id) {
-          <button class="user-card" (click)="selectUser(user)">
-            <span class="user-card-avatar">{{ user.name.charAt(0).toUpperCase() }}</span>
-            <span class="user-card-name">{{ user.name }}</span>
-          </button>
+        @if (users.length === 0) {
+          <div class="empty-state-center">
+            <div style="font-size:3rem">👤</div>
+            <h2 style="font-size:1.1rem;font-weight:700;color:var(--text-dark);margin:0">Keine Benutzer vorhanden</h2>
+            <p style="font-size:0.85rem;color:var(--text-light);margin:0">Bitte zuerst Benutzer erstellen.</p>
+            <a class="btn-add" routerLink="/users">Benutzer verwalten →</a>
+          </div>
+        } @else {
+          <div class="select-grid">
+            @for (user of users; track user.id) {
+              <button class="select-card" (click)="selectUser(user)">
+                <div class="user-avatar-big">{{ user.name.charAt(0).toUpperCase() }}</div>
+                <span class="select-card-name">{{ user.name }}</span>
+              </button>
+            }
+          </div>
         }
+
       </div>
-    }
+    </div>
   </div>
 
-<!-- ─── PASO 3: PIN DEL USUARIO ───────────────────── -->
+<!-- ─── PASO 3: PIN ───────────────────────────── -->
 } @else if (step === 'verify-pin') {
-  <div class="start-screen">
-    <div class="start-header">
-      <button class="btn-back" (click)="backToUsers()">← Zurück</button>
-      <span class="brand-logo">🎭 {{ selectedShow?.name }}</span>
-    </div>
-
-    <div class="pin-screen">
-      <div class="pin-avatar">{{ selectedUser?.name?.charAt(0)?.toUpperCase() }}</div>
-      <h2 class="pin-name">{{ selectedUser?.name }}</h2>
-      <p class="pin-label">PIN eingeben</p>
-
-      <!-- PIN Dots -->
-      <div class="pin-dots">
-        @for (i of [0,1,2,3]; track i) {
-          <div class="pin-dot" [class.filled]="pinInput.length > i"></div>
-        }
-      </div>
-
-      @if (pinError) {
-        <p class="pin-error">{{ pinError }}</p>
-      }
-
-      <!-- PIN Numpad -->
-      <div class="pin-numpad">
-        @for (key of ['1','2','3','4','5','6','7','8','9','','0','⌫']; track key) {
-          @if (key === '') {
-            <div class="pin-key-empty"></div>
-          } @else {
-            <button
-              class="pin-key"
-              [class.pin-key-del]="key === '⌫'"
-              (click)="pressPinKey(key)">
-              {{ key }}
-            </button>
-          }
-        }
-      </div>
-
-      <button
-        class="btn-confirm-pin"
-        (click)="confirmPin()"
-        [disabled]="pinInput.length < 4">
-        ▶ Kassenschicht öffnen
-      </button>
-    </div>
-  </div>
-
-<!-- ─── POS AKTIV ──────────────────────────────────── -->
-} @else {
-  <div class="pos-layout">
-
-    <!-- PANEL LINKS — Produkte -->
-    <section class="products-panel">
-      <div class="panel-header">
-        <span class="brand">POS Show</span>
-        <span class="status-dot">● Offline</span>
-      </div>
-      <div class="products-grid">
-        @for (p of products; track p.id) {
-          <button class="product-btn" (click)="addItem(p)">
-            <span class="product-name">{{ p.name }}</span>
-            <span class="product-price">{{ formatEUR(p.priceCents) }}</span>
-          </button>
-        }
-      </div>
-    </section>
-
-    <!-- PANEL RECHTS — Checkout + Numpad -->
-    <aside class="checkout-panel">
-
-      <!-- Shift Info Bar -->
-      <div class="shift-info">
-        <span class="shift-label">
-          🎭 {{ activeShift?.showName }} &nbsp;·&nbsp;
-          👤 {{ activeShift?.userName }} &nbsp;·&nbsp;
-          ● seit {{ formatDateTime(activeShift!.openedAt) }}
-        </span>
-        <div>
-          <button class="btn-dashboard" routerLink="/dashboard">📊</button>
-          <button class="btn-close-shift" (click)="closeShift()">Schließen</button>
+  <div class="app-shell">
+    <app-sidebar />
+    <div class="main-area">
+      <div class="topbar">
+        <span class="topbar-title">🔐 PIN eingeben — {{ selectedShow?.name }}</span>
+        <div class="topbar-actions">
+          <button class="topbar-btn" (click)="backToUsers()">← Zurück</button>
         </div>
       </div>
+      <div class="page-content" style="align-items:center; justify-content:center;">
 
-      <!-- HAUPTBEREICH: Artikel + Numpad -->
-      <div class="checkout-main">
+        <div class="pin-box">
+          <div class="user-avatar-big">{{ selectedUser?.name?.charAt(0)?.toUpperCase() }}</div>
+          <h2 class="pin-name">{{ selectedUser?.name }}</h2>
+          <p class="pin-label">PIN eingeben</p>
 
-        <!-- LINKE SEITE -->
-        <div class="checkout-left">
+          <div class="pin-dots">
+            @for (i of [0,1,2,3]; track i) {
+              <div class="pin-dot" [class.filled]="pinInput.length > i"></div>
+            }
+          </div>
 
-          <div class="total-section">
-            <div class="total-label">Gesamt</div>
-            <div class="total-amount" [class.has-items]="currentOrder.length > 0">
-              {{ formatEUR(currentTotalCents) }}
-            </div>
-            <div class="item-count">
-              @if (currentOrder.length === 0) {
-                <span class="muted">Keine Artikel</span>
+          @if (pinError) {
+            <p class="pin-error">{{ pinError }}</p>
+          }
+
+          <div class="pin-numpad">
+            @for (key of ['1','2','3','4','5','6','7','8','9','','0','⌫']; track key) {
+              @if (key === '') {
+                <div></div>
               } @else {
-                <span class="badge">{{ currentOrder.length }} Artikel</span>
+                <button class="pin-key" [class.pin-key-del]="key === '⌫'" (click)="pressPinKey(key)">
+                  {{ key }}
+                </button>
               }
-            </div>
-          </div>
-
-          @if (currentOrder.length > 0) {
-            <div class="current-items">
-              @for (g of summarizeItems(currentOrder); track $index) {
-                <div class="current-item-row">
-                  <span class="item-qty">{{ g.qty }}×</span>
-                  <span class="item-name">{{ g.name }}</span>
-                  <span class="item-total">{{ formatEUR(g.lineTotalCents) }}</span>
-                  <button class="btn-remove-item" (click)="removeItem(g.id)">✕</button>
-                </div>
-              }
-            </div>
-          }
-
-          <div class="spacer"></div>
-
-          <div class="btn-row">
-            <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
-              ↩ STORNO
-            </button>
-            <button class="btn-secondary btn-danger" (click)="clearOrder()" [disabled]="currentOrder.length === 0">
-              ✕ LEEREN
-            </button>
-          </div>
-
-          <button class="btn-history" (click)="toggleSales()">
-            {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
-          </button>
-
-        </div>
-
-        <!-- RECHTE SEITE — Numpad -->
-        <div class="checkout-right">
-
-          <div class="given-display">
-            <div class="given-label">Gegeben</div>
-            <div class="given-amount" [class.empty]="givenCents === 0">
-              {{ givenCents === 0 ? '€ 0,00' : formatEUR(givenCents) }}
-            </div>
-          </div>
-
-          <div class="quick-btns">
-            @for (a of quickAmounts; track a) {
-              <button class="quick-btn"
-                [class.active]="givenCents === a * 100"
-                (click)="setQuickAmount(a * 100)">
-                € {{ a }}
-              </button>
-            }
-            <button class="quick-btn passend"
-              [class.active]="givenCents === currentTotalCents && currentTotalCents > 0"
-              (click)="setPassend()">
-              Passend
-            </button>
-          </div>
-
-          <div class="numpad">
-            @for (key of keys; track key) {
-              <button class="numpad-btn"
-                [class.numpad-del]="key === '⌫'"
-                (click)="pressKey(key)">
-                {{ key }}
-              </button>
             }
           </div>
 
-          <div class="wechselgeld-box"
-            [class.positive]="wechselgeld > 0"
-            [class.negative]="wechselgeld < 0 && givenCents > 0">
-            <span class="wg-label">Wechselgeld</span>
-            <span class="wg-amount">
-              @if (givenCents === 0) { — }
-              @else if (wechselgeld < 0) { Zu wenig: {{ formatEUR(-wechselgeld) }} }
-              @else { {{ formatEUR(wechselgeld) }} }
-            </span>
-          </div>
-
-          <button class="btn-kassieren" (click)="checkout()" [disabled]="!canKassieren">
-            <span class="btn-icon">✔</span> KASSIEREN
+          <button class="btn-add" style="width:100%;padding:0.8rem;font-size:0.95rem"
+            (click)="confirmPin()" [disabled]="pinInput.length < 4">
+            ▶ Kassenschicht öffnen
           </button>
-
         </div>
+
       </div>
-
-    </aside>
+    </div>
   </div>
 
-  @if (showSales) {
-    <section class="sales-section">
-      <div class="sales-header">
-        <h2 class="sales-title">Letzte Verkäufe</h2>
-        <button class="btn-close-history" (click)="toggleSales()">✕ Schließen</button>
+<!-- ─── POS AKTIV ──────────────────────────────── -->
+} @else {
+  <div class="app-shell">
+    <app-sidebar />
+    <div class="main-area" style="overflow:hidden">
+
+      <!-- Topbar -->
+      <div class="topbar">
+        <span class="topbar-title">Kassensystem</span>
+        <div class="topbar-actions">
+          <span class="topbar-badge">
+            🎭 {{ activeShift?.showName }} · 👤 {{ activeShift?.userName }} · ● seit {{ formatDateTime(activeShift!.openedAt) }}
+          </span>
+          <button class="topbar-btn topbar-btn-danger" (click)="closeShift()">✕ Schließen</button>
+        </div>
       </div>
-      @if (orders.length === 0) {
-        <p class="muted">Noch keine Verkäufe in dieser Kassenschicht.</p>
-      } @else {
-        <ul class="sales-list">
-          @for (o of orders; track o.id) {
-            <li>
-              <div class="sale-row" (click)="toggleOrderDetails(o.id)">
-                <span class="sale-time">{{ formatDateTime(o.timestamp) }}</span>
-                <span class="sale-items">{{ o.items.length }} Artikel</span>
-                <strong class="sale-total">{{ formatEUR(o.totalCents) }}</strong>
-                <span class="chevron">{{ expandedOrderId === o.id ? '▲' : '▼' }}</span>
+
+      <!-- POS Layout -->
+      <div class="pos-layout">
+
+        <!-- Produkte -->
+        <div class="products-panel">
+          <div class="products-grid">
+            @for (p of products; track p.id) {
+              <button class="product-btn" (click)="addItem(p)">
+                <span class="product-name">{{ p.name }}</span>
+                <span class="product-price">{{ formatEUR(p.priceCents) }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Checkout -->
+        <div class="checkout-panel">
+          <div class="checkout-inner">
+
+            <!-- Total -->
+            <div class="total-card">
+              <div class="total-label">Gesamt</div>
+              <div class="total-amount" [class.has-items]="currentOrder.length > 0">
+                {{ formatEUR(currentTotalCents) }}
               </div>
-              @if (expandedOrderId === o.id) {
-                <div class="sale-details">
-                  @for (g of summarizeItems(o.items); track $index) {
-                    <div class="detail-row">
-                      <span>{{ g.qty }} × {{ g.name }}</span>
-                      <span>{{ formatEUR(g.lineTotalCents) }}</span>
-                    </div>
-                  }
-                </div>
+              <div class="item-count">
+                @if (currentOrder.length === 0) { Keine Artikel }
+                @else { {{ currentOrder.length }} Artikel }
+              </div>
+            </div>
+
+            <!-- Artikel -->
+            @if (currentOrder.length > 0) {
+              <div class="current-items">
+                @for (g of summarizeItems(currentOrder); track $index) {
+                  <div class="current-item-row">
+                    <span class="item-qty">{{ g.qty }}×</span>
+                    <span class="item-name">{{ g.name }}</span>
+                    <span class="item-total">{{ formatEUR(g.lineTotalCents) }}</span>
+                    <button class="btn-remove-item" (click)="removeItem(g.id)">✕</button>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Gegeben -->
+            <div class="given-section">
+              <div class="given-label">Gegeben</div>
+              <div class="given-amount" [class.empty]="givenCents === 0">
+                {{ givenCents === 0 ? '€ 0,00' : formatEUR(givenCents) }}
+              </div>
+            </div>
+
+            <!-- Schnellbeträge -->
+            <div class="quick-btns">
+              @for (a of quickAmounts; track a) {
+                <button class="quick-btn"
+                  [class.active]="givenCents === a * 100"
+                  (click)="setQuickAmount(a * 100)">
+                  € {{ a }}
+                </button>
               }
-            </li>
-          }
-        </ul>
-      }
-    </section>
+              <button class="quick-btn passend"
+                [class.active]="givenCents === currentTotalCents && currentTotalCents > 0"
+                (click)="setPassend()">
+                Passend
+              </button>
+            </div>
+
+            <!-- Numpad -->
+            <div class="numpad">
+              @for (key of keys; track key) {
+                <button class="numpad-btn"
+                  [class.numpad-del]="key === '⌫'"
+                  (click)="pressKey(key)">
+                  {{ key }}
+                </button>
+              }
+            </div>
+
+            <!-- Wechselgeld -->
+            <div class="wechselgeld-box"
+              [class.positive]="wechselgeld > 0"
+              [class.negative]="wechselgeld < 0 && givenCents > 0">
+              <span class="wg-label">Wechselgeld</span>
+              <span class="wg-amount">
+                @if (givenCents === 0) { — }
+                @else if (wechselgeld < 0) { Zu wenig: {{ formatEUR(-wechselgeld) }} }
+                @else { {{ formatEUR(wechselgeld) }} }
+              </span>
+            </div>
+
+          </div>
+
+          <!-- Aktionen -->
+          <div class="checkout-actions">
+            <button class="btn-kassieren" (click)="checkout()" [disabled]="!canKassieren">
+              ✓ KASSIEREN
+            </button>
+            <div class="btn-row">
+              <button class="btn-secondary" (click)="undoLastItem()" [disabled]="currentOrder.length === 0">
+                ↩ STORNO
+              </button>
+              <button class="btn-secondary btn-danger-light" (click)="clearOrder()" [disabled]="currentOrder.length === 0">
+                ✕ LEEREN
+              </button>
+            </div>
+            <button class="btn-history" (click)="toggleSales()">
+              {{ showSales ? '▲ Verlauf ausblenden' : '▼ Letzte Verkäufe' }}
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Letzte Verkäufe -->
+  @if (showSales) {
+    <div class="overlay" (click)="toggleSales()">
+      <div class="dialog" style="max-width:520px" (click)="$event.stopPropagation()">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <h3 class="dialog-title" style="margin:0">Letzte Verkäufe</h3>
+          <button class="btn-cancel" (click)="toggleSales()">✕ Schließen</button>
+        </div>
+        @if (orders.length === 0) {
+          <p style="color:var(--text-light);font-size:0.85rem">Noch keine Verkäufe in dieser Kassenschicht.</p>
+        } @else {
+          <ul class="sales-list">
+            @for (o of orders; track o.id) {
+              <li>
+                <div class="sale-row" (click)="toggleOrderDetails(o.id)">
+                  <span class="sale-time">{{ formatDateTime(o.timestamp) }}</span>
+                  <span class="sale-items">{{ o.items.length }} Artikel</span>
+                  <strong class="sale-total">{{ formatEUR(o.totalCents) }}</strong>
+                  <span class="chevron">{{ expandedOrderId === o.id ? '▲' : '▼' }}</span>
+                </div>
+                @if (expandedOrderId === o.id) {
+                  <div class="sale-details">
+                    @for (g of summarizeItems(o.items); track $index) {
+                      <div class="detail-row">
+                        <span>{{ g.qty }} × {{ g.name }}</span>
+                        <span>{{ formatEUR(g.lineTotalCents) }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
   }
 }
 
-<!-- ─── ESTILOS DE LAS PANTALLAS DE INICIO ────────── -->
 <style>
-  .start-screen {
-    min-height: 100vh;
-    background: #0f0f1a;
+  /* ─── SELECT SCREENS ─────────────────────── */
+  .empty-state-center {
     display: flex;
     flex-direction: column;
     align-items: center;
-  }
-
-  .start-header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1.2rem 1.5rem;
-    background: #12121f;
-    border-bottom: 1px solid #1e1e3a;
-    position: relative;
-  }
-  .brand-logo {
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: #7c6fff;
-  }
-  .btn-back {
-    position: absolute;
-    left: 1.5rem;
-    background: transparent;
-    border: 1px solid #333355;
-    color: #aaaacc;
-    padding: 0.4rem 0.8rem;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    cursor: pointer;
-  }
-  .btn-back:hover { border-color: #7c6fff; color: #e0e0ff; }
-
-  .start-title {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: #e0e0ff;
-    margin: 2.5rem 0 1.5rem;
+    gap: 0.8rem;
     text-align: center;
   }
 
-  .cards-grid {
+  .select-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 1rem;
     width: 100%;
-    max-width: 800px;
-    padding: 0 1.5rem;
+    max-width: 760px;
   }
 
-  .show-card {
-    background: #1a1a2e;
-    border: 2px solid #2a2a4a;
-    border-radius: 16px;
+  .select-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
     padding: 2rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.8rem;
     cursor: pointer;
-    transition: all 0.2s;
-    color: #e0e0ff;
+    transition: all 0.15s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    font-family: var(--font);
   }
-  .show-card:hover {
-    border-color: #7c6fff;
-    background: rgba(124,111,255,0.1);
+  .select-card:hover {
+    border-color: var(--blue);
+    background: var(--blue-light);
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(25,118,210,0.15);
   }
-  .show-card-icon { font-size: 2.5rem; }
-  .show-card-name {
-    font-size: 1rem;
+  .select-card-name {
+    font-size: 0.95rem;
     font-weight: 700;
+    color: var(--text-dark);
     text-align: center;
-    color: #e0e0ff;
   }
 
-  .user-card {
-    background: #1a1a2e;
-    border: 2px solid #2a2a4a;
-    border-radius: 16px;
-    padding: 1.8rem 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: #e0e0ff;
-  }
-  .user-card:hover {
-    border-color: #7c6fff;
-    background: rgba(124,111,255,0.1);
-    transform: translateY(-2px);
-  }
-  .user-card-avatar {
+  .user-avatar-big {
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #7c6fff, #5a4fcc);
+    background: var(--blue);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: white;
   }
-  .user-card-name {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #e0e0ff;
-  }
 
-  /* PIN Screen */
-  .pin-screen {
+  /* ─── PIN BOX ────────────────────────────── */
+  .pin-box {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem 1.5rem;
+    gap: 0.6rem;
     width: 100%;
-    max-width: 360px;
-  }
-  .pin-avatar {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #7c6fff, #5a4fcc);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    font-weight: 800;
-    color: white;
-    margin-bottom: 0.8rem;
+    max-width: 320px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
   }
   .pin-name {
-    font-size: 1.3rem;
-    font-weight: 800;
-    color: #e0e0ff;
-    margin: 0 0 0.3rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
   }
   .pin-label {
-    font-size: 0.85rem;
-    color: #888aaa;
-    margin: 0 0 1.2rem;
+    font-size: 0.82rem;
+    color: var(--text-light);
+    margin: 0;
   }
   .pin-dots {
     display: flex;
-    gap: 0.8rem;
-    margin-bottom: 0.8rem;
+    gap: 0.7rem;
+    margin: 0.5rem 0;
   }
   .pin-dot {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    border: 2px solid #3a3a6a;
+    border: 2px solid #d0d5dd;
     background: transparent;
     transition: all 0.15s;
   }
   .pin-dot.filled {
-    background: #7c6fff;
-    border-color: #7c6fff;
+    background: var(--blue);
+    border-color: var(--blue);
   }
   .pin-error {
-    color: #ff6b6b;
-    font-size: 0.82rem;
-    margin: 0 0 0.8rem;
+    color: var(--red);
+    font-size: 0.8rem;
+    margin: 0;
   }
   .pin-numpad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 0.6rem;
+    gap: 0.5rem;
     width: 100%;
-    margin-bottom: 1.2rem;
+    margin: 0.5rem 0;
   }
   .pin-key {
-    background: #1a1a2e;
-    border: 1px solid #2a2a4a;
-    color: #e0e0ff;
-    padding: 1rem;
-    border-radius: 12px;
-    font-size: 1.2rem;
-    font-weight: 700;
+    background: #f8f9fb;
+    border: 1px solid var(--card-border);
+    color: var(--text-dark);
+    padding: 0.85rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s;
+    font-family: var(--font);
+    transition: all 0.12s;
   }
-  .pin-key:hover { background: #252545; border-color: #7c6fff; }
+  .pin-key:hover { background: var(--blue-light); border-color: var(--blue); }
   .pin-key:active { transform: scale(0.95); }
-  .pin-key-del { color: #ff6b6b; }
-  .pin-key-empty { background: transparent; border: none; }
-  .btn-confirm-pin {
-    width: 100%;
-    background: #7c6fff;
+  .pin-key-del { color: var(--red); }
+
+  /* ─── POS LAYOUT ─────────────────────────── */
+  .pos-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 50px);
+  }
+
+  .products-panel {
+    padding: 13px;
+    overflow-y: auto;
+    background: var(--content-bg);
+  }
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .product-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 11px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    min-height: 72px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: var(--font);
+  }
+  .product-btn:hover { background: var(--blue-light); border-color: rgba(25,118,210,0.3); }
+  .product-name { font-size: 13px; font-weight: 600; color: var(--text-dark); text-align: left; }
+  .product-price { font-size: 13px; color: var(--blue); font-weight: 700; text-align: left; }
+
+  /* Checkout Panel */
+  .checkout-panel {
+    display: flex;
+    flex-direction: column;
+    background: var(--card-bg);
+    border-left: 1px solid var(--card-border);
+    overflow: hidden;
+  }
+  .checkout-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    gap: 7px;
+    overflow-y: auto;
+  }
+
+  .total-card {
+    background: var(--blue);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .total-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: 0.7; margin-bottom: 4px; }
+  .total-amount { font-size: 32px; font-weight: 300; letter-spacing: -2px; line-height: 1; opacity: 0.35; }
+  .total-amount.has-items { opacity: 1; }
+  .item-count { margin-top: 4px; font-size: 11px; opacity: 0.7; }
+
+  .current-items { display: flex; flex-direction: column; gap: 3px; }
+  .current-item-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 5px 7px;
+    border-radius: 5px;
+    background: #f8f9fb;
+    border: 1px solid #eef0f4;
+  }
+  .item-qty { color: var(--blue); font-size: 11px; font-weight: 700; min-width: 20px; }
+  .item-name { flex: 1; font-weight: 500; color: var(--text-dark); }
+  .item-total { font-size: 11px; color: var(--text-mid); font-weight: 600; }
+  .btn-remove-item {
+    background: transparent;
     border: none;
-    color: white;
-    padding: 0.9rem;
-    border-radius: 12px;
-    font-size: 1rem;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 11px;
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+  .btn-remove-item:hover { background: var(--red-soft); }
+
+  /* Gegeben */
+  .given-section {
+    background: #f8f9fb;
+    border: 1px solid var(--card-border);
+    border-radius: 7px;
+    padding: 8px 10px;
+    flex-shrink: 0;
+  }
+  .given-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-light); margin-bottom: 2px; }
+  .given-amount { font-size: 20px; font-weight: 600; color: var(--text-dark); }
+  .given-amount.empty { color: var(--text-light); }
+
+  /* Quick + Numpad */
+  .quick-btns {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .quick-btn {
+    padding: 5px 2px;
+    border-radius: 5px;
+    border: 1px solid var(--card-border);
+    background: #f8f9fb;
+    color: var(--text-dark);
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .quick-btn:hover, .quick-btn.active { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+  .quick-btn.passend { grid-column: span 1; }
+
+  .numpad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .numpad-btn {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--card-border);
+    background: #f8f9fb;
+    color: var(--text-dark);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .numpad-btn:hover { background: var(--blue-light); border-color: var(--blue); }
+  .numpad-del { color: var(--red); }
+
+  /* Wechselgeld */
+  .wechselgeld-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: #f8f9fb;
+    border: 1px solid var(--card-border);
+    flex-shrink: 0;
+  }
+  .wechselgeld-box.positive { background: #e8f5e9; border-color: #a5d6a7; }
+  .wechselgeld-box.negative { background: #ffebee; border-color: #ef9a9a; }
+  .wg-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-light); }
+  .wg-amount { font-size: 15px; font-weight: 700; color: var(--text-dark); }
+  .wechselgeld-box.positive .wg-amount { color: #2e7d32; }
+  .wechselgeld-box.negative .wg-amount { color: var(--red); }
+
+  /* Checkout Actions */
+  .checkout-actions {
+    padding: 8px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-top: 1px solid var(--card-border);
+    background: #fafbfc;
+    flex-shrink: 0;
+  }
+  .btn-kassieren {
+    width: 100%;
+    padding: 12px;
+    border-radius: 7px;
+    border: none;
+    background: var(--blue);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     transition: background 0.15s;
   }
-  .btn-confirm-pin:hover:not(:disabled) { background: #6a5fdd; }
-  .btn-confirm-pin:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-kassieren:hover:not(:disabled) { background: var(--blue-hover); }
+  .btn-kassieren:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* Empty state */
-  .empty-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.8rem;
-    margin-top: 3rem;
-    padding: 0 1.5rem;
-    text-align: center;
-  }
-  .empty-icon { font-size: 3rem; }
-  .empty-title { font-size: 1.2rem; font-weight: 700; color: #e0e0ff; margin: 0; }
-  .empty-sub { font-size: 0.88rem; color: #888aaa; margin: 0; }
-  .btn-goto {
-    background: #7c6fff;
-    border: none;
-    color: white;
-    padding: 0.7rem 1.4rem;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 700;
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+  .btn-secondary {
+    padding: 7px;
+    border-radius: 6px;
+    border: 1px solid #d0d5dd;
+    background: #fff;
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
-    margin-top: 0.5rem;
+    transition: all 0.12s;
   }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
+  .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-danger-light { color: var(--red) !important; border-color: rgba(229,57,53,0.3) !important; }
+  .btn-danger-light:hover:not(:disabled) { background: var(--red-soft) !important; border-color: var(--red) !important; }
 
-  /* Footer links */
-  .start-footer {
-    display: flex;
-    gap: 0.6rem;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-    justify-content: center;
-    padding-bottom: 2rem;
-  }
-  .btn-admin-link {
+  .btn-history {
+    width: 100%;
+    padding: 6px;
+    border-radius: 5px;
+    border: 1px solid #e8ebf0;
     background: transparent;
-    border: 1px solid #2a2a4a;
-    color: #888aaa;
-    padding: 0.4rem 0.9rem;
-    border-radius: 20px;
-    font-size: 0.78rem;
+    color: var(--text-light);
+    font-family: var(--font);
+    font-size: 10px;
     cursor: pointer;
-    transition: all 0.15s;
   }
-  .btn-admin-link:hover { border-color: #7c6fff; color: #e0e0ff; }
+
+  /* Sales list */
+  .sales-list { list-style: none; padding: 0; margin: 0; }
+  .sales-list li { border-bottom: 1px solid #f0f2f5; }
+  .sales-list li:last-child { border-bottom: none; }
+  .sale-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .sale-row:hover { background: #f8f9fb; }
+  .sale-time { color: var(--text-light); flex: 1; }
+  .sale-items { color: var(--text-mid); }
+  .sale-total { color: var(--text-dark); }
+  .chevron { color: var(--text-light); font-size: 10px; }
+  .sale-details { padding: 6px 4px 10px; }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-mid);
+    padding: 2px 0;
+  }
 </style>
