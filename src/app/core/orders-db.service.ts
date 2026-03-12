@@ -3,73 +3,76 @@ import { Injectable } from '@angular/core';
 // ─── MODELO DE ORDEN ───────────────────────────────
 export type StoredOrder = {
   id: string;
-  items: any[];
+  items: any[];       // más adelante tipamos como Product[]
   totalCents: number;
   timestamp: number;
-  shiftId?: string;
+  shiftId?: string;   // ID del turno al que pertenece esta venta
 };
 
 @Injectable({ providedIn: 'root' })
 export class OrdersDbService {
-  private readonly DB_NAME    = 'pos_show_db';
-  private readonly DB_VERSION = 3; // ← versión unificada
-  private readonly STORE      = 'orders';
+  private readonly DB_NAME = 'pos_show_db';
+  private readonly DB_VERSION = 2; // versión 2 — añadimos store de turnos
+  private readonly STORE = 'orders';
 
   private dbPromise: Promise<IDBDatabase> | null = null;
 
   // ─── CONEXIÓN A INDEXEDDB ──────────────────────────
   private getDb(): Promise<IDBDatabase> {
     if (this.dbPromise) return this.dbPromise;
+
     this.dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
+
       request.onupgradeneeded = () => {
         const db = request.result;
-        if (!db.objectStoreNames.contains('orders')) {
-          db.createObjectStore('orders', { keyPath: 'id' });
+        // Crea store de órdenes si no existe
+        if (!db.objectStoreNames.contains(this.STORE)) {
+          db.createObjectStore(this.STORE, { keyPath: 'id' });
         }
+        // Crea store de turnos si no existe
         if (!db.objectStoreNames.contains('shifts')) {
           db.createObjectStore('shifts', { keyPath: 'id' });
         }
-        if (!db.objectStoreNames.contains('shows')) {
-          db.createObjectStore('shows', { keyPath: 'id' });
-        }
       };
+
       request.onsuccess = () => resolve(request.result);
-      request.onerror  = () => reject(request.error);
+      request.onerror = () => reject(request.error);
     });
+
     return this.dbPromise;
   }
 
-  // ─── ORDEN SPEICHERN ───────────────────────────────
+  // ─── GUARDAR ORDEN ─────────────────────────────────
   async addOrder(order: StoredOrder): Promise<void> {
     const db = await this.getDb();
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(this.STORE, 'readwrite');
       tx.objectStore(this.STORE).put(order);
       tx.oncomplete = () => resolve();
-      tx.onerror    = () => reject(tx.error);
+      tx.onerror = () => reject(tx.error);
     });
   }
 
-  // ─── ALLE ORDERS LADEN ─────────────────────────────
+  // ─── CARGAR TODAS LAS ÓRDENES ──────────────────────
   async getAllOrders(): Promise<StoredOrder[]> {
     const db = await this.getDb();
-    return new Promise<StoredOrder[]>((resolve, reject) => {
-      const tx  = db.transaction(this.STORE, 'readonly');
+    return await new Promise<StoredOrder[]>((resolve, reject) => {
+      const tx = db.transaction(this.STORE, 'readonly');
       const req = tx.objectStore(this.STORE).getAll();
       req.onsuccess = () => resolve((req.result as StoredOrder[]) ?? []);
-      req.onerror   = () => reject(req.error);
+      req.onerror = () => reject(req.error);
     });
   }
 
-  // ─── ALLE ORDERS LÖSCHEN ───────────────────────────
+  // ─── BORRAR TODAS LAS ÓRDENES ──────────────────────
   async clearOrders(): Promise<void> {
     const db = await this.getDb();
     await new Promise<void>((resolve, reject) => {
       const tx = db.transaction(this.STORE, 'readwrite');
       tx.objectStore(this.STORE).clear();
       tx.oncomplete = () => resolve();
-      tx.onerror    = () => reject(tx.error);
+      tx.onerror = () => reject(tx.error);
     });
   }
 }
