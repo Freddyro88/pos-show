@@ -17,9 +17,12 @@ import jsPDF from 'jspdf';
     <div class="summary-screen">
       <div class="summary-box">
 
-        <!-- Titel -->
-        <div class="summary-icon">🔒</div>
-        <h1 class="summary-title">Kassenschicht geschlossen</h1>
+       <!-- ─── TITEL + SHOW NAME ─────────────────────── -->
+<div class="summary-icon">🔒</div>
+<h1 class="summary-title">Kassenschicht geschlossen</h1>
+@if (shift.showName) {
+  <div class="summary-show-name">🎪 {{ shift.showName }}</div>
+}
 
         <!-- Öffnungs- und Schließzeit -->
         <div class="summary-time">
