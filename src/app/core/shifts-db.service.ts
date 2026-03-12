@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 
-// ─── MODELO DE TURNO ───────────────────────────────
 export type Shift = {
   id: string;
   openedAt: number;
@@ -9,19 +8,22 @@ export type Shift = {
   totalCents: number;
   showId: string;
   showName: string;
+  userId: string;
+  userName: string;
 };
 
 @Injectable({ providedIn: 'root' })
 export class ShiftsDbService {
-  private readonly DB_NAME    = 'pos_show_db';
-  private readonly DB_VERSION = 3; // ← versión unificada con shows store
-  private readonly ORDERS_STORE = 'orders';
+
+  private readonly DB_NAME     = 'pos_show_db';
+  private readonly DB_VERSION  = 4;
   private readonly SHIFTS_STORE = 'shifts';
+  private readonly ORDERS_STORE = 'orders';
   private readonly SHOWS_STORE  = 'shows';
+  private readonly USERS_STORE  = 'users';
 
   private dbPromise: Promise<IDBDatabase> | null = null;
 
-  // ─── CONEXIÓN A INDEXEDDB ──────────────────────────
   private getDb(): Promise<IDBDatabase> {
     if (this.dbPromise) return this.dbPromise;
     this.dbPromise = new Promise((resolve, reject) => {
@@ -34,18 +36,19 @@ export class ShiftsDbService {
         if (!db.objectStoreNames.contains(this.SHIFTS_STORE)) {
           db.createObjectStore(this.SHIFTS_STORE, { keyPath: 'id' });
         }
-        // ─── Neuer Store für Shows ─────────────────
         if (!db.objectStoreNames.contains(this.SHOWS_STORE)) {
           db.createObjectStore(this.SHOWS_STORE, { keyPath: 'id' });
         }
+        if (!db.objectStoreNames.contains(this.USERS_STORE)) {
+          db.createObjectStore(this.USERS_STORE, { keyPath: 'id' });
+        }
       };
       request.onsuccess = () => resolve(request.result);
-      request.onerror  = () => reject(request.error);
+      request.onerror   = () => reject(request.error);
     });
     return this.dbPromise;
   }
 
-  // ─── TURNO SPEICHERN ───────────────────────────────
   async saveShift(shift: Shift): Promise<void> {
     const db = await this.getDb();
     await new Promise<void>((resolve, reject) => {
@@ -56,7 +59,6 @@ export class ShiftsDbService {
     });
   }
 
-  // ─── ALLE TURNOS LADEN ─────────────────────────────
   async getAllShifts(): Promise<Shift[]> {
     const db = await this.getDb();
     return new Promise<Shift[]>((resolve, reject) => {
@@ -67,7 +69,6 @@ export class ShiftsDbService {
     });
   }
 
-  // ─── AKTIVEN TURNO LADEN ───────────────────────────
   async getActiveShift(): Promise<Shift | null> {
     const all = await this.getAllShifts();
     return all.find(s => s.closedAt === null) ?? null;
