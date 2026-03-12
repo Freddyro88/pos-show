@@ -1,46 +1,52 @@
 import { Injectable } from '@angular/core';
 
-// ─── MODELO DE ORDEN ───────────────────────────────
 export type StoredOrder = {
   id: string;
   items: any[];
   totalCents: number;
   timestamp: number;
   shiftId?: string;
+  userId?: string;
+  userName?: string;
 };
 
 @Injectable({ providedIn: 'root' })
 export class OrdersDbService {
-  private readonly DB_NAME    = 'pos_show_db';
-  private readonly DB_VERSION = 3; // ← versión unificada
-  private readonly STORE      = 'orders';
+
+  private readonly DB_NAME     = 'pos_show_db';
+  private readonly DB_VERSION  = 4;
+  private readonly STORE        = 'orders';
+  private readonly SHIFTS_STORE = 'shifts';
+  private readonly SHOWS_STORE  = 'shows';
+  private readonly USERS_STORE  = 'users';
 
   private dbPromise: Promise<IDBDatabase> | null = null;
 
-  // ─── CONEXIÓN A INDEXEDDB ──────────────────────────
   private getDb(): Promise<IDBDatabase> {
     if (this.dbPromise) return this.dbPromise;
     this.dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(this.DB_NAME, this.DB_VERSION);
       request.onupgradeneeded = () => {
         const db = request.result;
-        if (!db.objectStoreNames.contains('orders')) {
-          db.createObjectStore('orders', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(this.STORE)) {
+          db.createObjectStore(this.STORE, { keyPath: 'id' });
         }
-        if (!db.objectStoreNames.contains('shifts')) {
-          db.createObjectStore('shifts', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(this.SHIFTS_STORE)) {
+          db.createObjectStore(this.SHIFTS_STORE, { keyPath: 'id' });
         }
-        if (!db.objectStoreNames.contains('shows')) {
-          db.createObjectStore('shows', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(this.SHOWS_STORE)) {
+          db.createObjectStore(this.SHOWS_STORE, { keyPath: 'id' });
+        }
+        if (!db.objectStoreNames.contains(this.USERS_STORE)) {
+          db.createObjectStore(this.USERS_STORE, { keyPath: 'id' });
         }
       };
       request.onsuccess = () => resolve(request.result);
-      request.onerror  = () => reject(request.error);
+      request.onerror   = () => reject(request.error);
     });
     return this.dbPromise;
   }
 
-  // ─── ORDEN SPEICHERN ───────────────────────────────
   async addOrder(order: StoredOrder): Promise<void> {
     const db = await this.getDb();
     await new Promise<void>((resolve, reject) => {
@@ -51,7 +57,6 @@ export class OrdersDbService {
     });
   }
 
-  // ─── ALLE ORDERS LADEN ─────────────────────────────
   async getAllOrders(): Promise<StoredOrder[]> {
     const db = await this.getDb();
     return new Promise<StoredOrder[]>((resolve, reject) => {
@@ -62,7 +67,6 @@ export class OrdersDbService {
     });
   }
 
-  // ─── ALLE ORDERS LÖSCHEN ───────────────────────────
   async clearOrders(): Promise<void> {
     const db = await this.getDb();
     await new Promise<void>((resolve, reject) => {
