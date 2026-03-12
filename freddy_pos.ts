@@ -38,17 +38,17 @@ export class PosComponent implements OnInit {
   closedShift: Shift | null = null;
   closedShiftOrders: StoredOrder[] = [];
 
-  // ─── PIN ───────────────────────────────────────────
+  // ─── PIN ──────────────────────────────────────────
   showPinModal = false;
   pinModalMode: 'verify' | 'set' = 'verify';
   pinActionLabel = '';
   pendingPinAction: PinAction = null;
 
-  // ─── SHOWS ─────────────────────────────────────────
+  // ─── SHOWS ────────────────────────────────────────
   shows: Show[] = [];
   selectedShowId: string = '';
 
-  // ─── NUMPAD — Wechselgeld ──────────────────────────
+  // ─── NUMPAD — Wechselgeld ─────────────────────────
   numpadInput: string = '';
   quickAmounts = [5, 10, 20, 50];
   keys = ['1','2','3','4','5','6','7','8','9',',','0','⌫'];
@@ -69,6 +69,7 @@ export class PosComponent implements OnInit {
     if (this.activeShift) {
       await this.loadOrdersForShift(this.activeShift.id);
     }
+    // ─── Lädt alle Shows für das Dropdown ──────────
     this.shows = await this.showsDb.getAllShows();
     if (this.shows.length > 0) {
       this.selectedShowId = this.shows[0].id;
@@ -83,7 +84,7 @@ export class PosComponent implements OnInit {
       .sort((a, b) => b.timestamp - a.timestamp) as unknown as Order[];
   }
 
-  // ─── PIN FLOW ──────────────────────────────────────
+  // ─── PIN FLOW ─────────────────────────────────────
   async openShift() {
     if (!this.selectedShowId) return;
     await this.requestPin('open-shift', 'Kassenschicht öffnen');
@@ -102,7 +103,7 @@ export class PosComponent implements OnInit {
       this.showPinModal = true;
       this.cdr.detectChanges();
     } catch (e) {
-      console.error('PIN service error:', e);
+      console.error('❌ PIN service error:', e);
       if (action === 'open-shift') await this._doOpenShift();
       else if (action === 'close-shift') await this._doCloseShift();
     }
@@ -124,6 +125,7 @@ export class PosComponent implements OnInit {
   }
 
   private async _doOpenShift() {
+    // ─── Show aus der Auswahl holen ─────────────────
     const selected = this.shows.find(s => s.id === this.selectedShowId);
     const shift: Shift = {
       id: crypto.randomUUID(),
@@ -156,7 +158,7 @@ export class PosComponent implements OnInit {
     this.cdr.detectChanges();
   }
 
-  // ─── NUMPAD LOGIK ──────────────────────────────────
+  // ─── NUMPAD LOGIK ─────────────────────────────────
   pressKey(key: string) {
     if (key === '⌫') {
       this.numpadInput = this.numpadInput.slice(0, -1);
@@ -202,7 +204,7 @@ export class PosComponent implements OnInit {
     return this.currentOrder.length > 0 && this.givenCents >= this.currentTotalCents;
   }
 
-  // ─── VERKAUF ───────────────────────────────────────
+  // ─── VERKAUF ──────────────────────────────────────
   toggleSales() {
     this.showSales = !this.showSales;
     this.expandedOrderId = null;
@@ -250,7 +252,7 @@ export class PosComponent implements OnInit {
     try {
       await this.ordersDb.addOrder(order);
     } catch (e) {
-      console.error('IndexedDB Fehler', e);
+      console.error('❌ IndexedDB Fehler', e);
     }
 
     this.activeShift.orderIds.push(order.id);
@@ -277,7 +279,7 @@ export class PosComponent implements OnInit {
     this.expandedOrderId = this.expandedOrderId === orderId ? null : orderId;
   }
 
-  // ─── HELPERS ───────────────────────────────────────
+  // ─── HELPERS ──────────────────────────────────────
   get currentTotalCents(): number {
     return this.currentOrder.reduce((sum, p) => sum + p.priceCents, 0);
   }

@@ -3,10 +3,12 @@ import { Injectable } from '@angular/core';
 // ─── MODELO DE TURNO ───────────────────────────────
 export type Shift = {
   id: string;
-  openedAt: number;   // timestamp apertura
-  closedAt: number | null;  // null = turno abierto
-  orderIds: string[]; // IDs de ventas de este turno
-  totalCents: number; // total acumulado del turno
+  openedAt: number;
+  closedAt: number | null;
+  orderIds: string[];
+  totalCents: number;
+  showId: string;
+  showName: string;
 };
 
 @Injectable({ providedIn: 'root' })

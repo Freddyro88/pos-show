@@ -1,8 +1,10 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShiftsDbService, Shift } from '../core/shifts-db.service';
 import { OrdersDbService, StoredOrder } from '../core/orders-db.service';
+import { ShowsDbService, Show } from '../core/shows-db.service';
 import { PinService } from '../core/pin.service';
 import { PinModalComponent } from '../shared/pin-modal.component';
 
@@ -22,7 +24,7 @@ type TopProduct = {
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, PinModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, PinModalComponent],
   template: `
     <!-- PIN Modal -->
     <app-pin-modal
@@ -52,6 +54,7 @@ type TopProduct = {
         <div class="topbar-right">
           <button class="btn-nav" routerLink="/pos">← Zur Kasse</button>
           <button class="btn-nav" routerLink="/admin">Produkte</button>
+          <button class="btn-nav" routerLink="/shows">🎭 Shows</button>
           <button class="btn-pin" (click)="openPinSetup()">🔐 PIN ändern</button>
           <button class="btn-export" (click)="exportPdf()">📄 PDF Export</button>
         </div>
@@ -66,23 +69,41 @@ type TopProduct = {
         (dismissed)="showPinSetup = false"
       />
 
+      <!-- Show Filter -->
+      <section class="filter-bar">
+        <label class="filter-label">🎭 Show:</label>
+        <div class="filter-pills">
+          <button
+            class="pill"
+            [class.pill--active]="selectedShowId === 'all'"
+            (click)="setShowFilter('all')"
+          >Alle Shows</button>
+          <button
+            class="pill"
+            *ngFor="let show of allShows"
+            [class.pill--active]="selectedShowId === show.id"
+            (click)="setShowFilter(show.id)"
+          >{{ show.name }}</button>
+        </div>
+      </section>
+
       <!-- KPI Karten -->
       <section class="kpi-grid">
         <div class="kpi-card">
           <div class="kpi-label">Gesamt Umsatz</div>
-          <div class="kpi-value">{{ formatEUR(totalRevenueCents) }}</div>
+          <div class="kpi-value">{{ formatEUR(filteredRevenueCents) }}</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Kassenschichten</div>
-          <div class="kpi-value">{{ shiftRows.length }}</div>
+          <div class="kpi-value">{{ filteredShiftRows.length }}</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Verkäufe gesamt</div>
-          <div class="kpi-value">{{ totalOrders }}</div>
+          <div class="kpi-value">{{ filteredOrderCount }}</div>
         </div>
         <div class="kpi-card">
           <div class="kpi-label">Ø pro Schicht</div>
-          <div class="kpi-value">{{ formatEUR(avgPerShift) }}</div>
+          <div class="kpi-value">{{ formatEUR(filteredAvgPerShift) }}</div>
         </div>
       </section>
 
@@ -91,11 +112,12 @@ type TopProduct = {
 
         <!-- Kassenschichten -->
         <div class="panel">
-          <h2 class="panel-title">Kassenschichten</h2>
+          <h2 class="panel-title">Kassenschichten{{ selectedShowId !== 'all' ? ' — ' + selectedShowName : '' }}</h2>
           <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
+                  <th>Show</th>
                   <th>Datum</th>
                   <th>Geöffnet</th>
                   <th>Geschlossen</th>
@@ -105,7 +127,8 @@ type TopProduct = {
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let row of shiftRows">
+                <tr *ngFor="let row of filteredShiftRows">
+                  <td class="show-cell">{{ row.shift.showName || '—' }}</td>
                   <td>{{ formatDate(row.shift.openedAt) }}</td>
                   <td>{{ formatTime(row.shift.openedAt) }}</td>
                   <td>{{ row.shift.closedAt ? formatTime(row.shift.closedAt) : '—' }}</td>
@@ -117,8 +140,8 @@ type TopProduct = {
                     </span>
                   </td>
                 </tr>
-                <tr *ngIf="shiftRows.length === 0">
-                  <td colspan="6" class="empty">Keine Kassenschichten vorhanden</td>
+                <tr *ngIf="filteredShiftRows.length === 0">
+                  <td colspan="7" class="empty">Keine Kassenschichten vorhanden</td>
                 </tr>
               </tbody>
             </table>
@@ -224,6 +247,54 @@ type TopProduct = {
     }
     .btn-export:hover { background: #6a5fdd; }
 
+    /* ── Show Filter ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1.5rem;
+      background: #12121f;
+      border-bottom: 1px solid #1e1e3a;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      font-size: 0.78rem;
+      color: #666688;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .filter-pills {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: transparent;
+      border: 1px solid #2a2a4a;
+      color: #888aaa;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pill:hover { border-color: #7c6fff; color: #e0e0ff; }
+    .pill--active {
+      background: #7c6fff;
+      border-color: #7c6fff;
+      color: white;
+      font-weight: 600;
+    }
+    .show-cell {
+      color: #7c6fff;
+      font-size: 0.8rem;
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* ── KPI ── */
     .kpi-grid {
       display: grid;
@@ -319,14 +390,47 @@ export class AdminDashboardComponent implements OnInit {
 
   shiftRows: ShiftRow[] = [];
   topProducts: TopProduct[] = [];
+  allShows: Show[] = [];
+
+  selectedShowId: string = 'all';
 
   totalRevenueCents = 0;
   totalOrders = 0;
   avgPerShift = 0;
 
+  // ─── Gefilterte Werte ────────────────────────────
+  get filteredShiftRows(): ShiftRow[] {
+    if (this.selectedShowId === 'all') return this.shiftRows;
+    return this.shiftRows.filter(r => r.shift.showId === this.selectedShowId);
+  }
+
+  get filteredRevenueCents(): number {
+    return this.filteredShiftRows.reduce((s, r) => s + r.totalCents, 0);
+  }
+
+  get filteredOrderCount(): number {
+    return this.filteredShiftRows.reduce((s, r) => s + r.orderCount, 0);
+  }
+
+  get filteredAvgPerShift(): number {
+    return this.filteredShiftRows.length
+      ? Math.round(this.filteredRevenueCents / this.filteredShiftRows.length)
+      : 0;
+  }
+
+  get selectedShowName(): string {
+    return this.allShows.find(s => s.id === this.selectedShowId)?.name ?? '';
+  }
+
+  setShowFilter(showId: string) {
+    this.selectedShowId = showId;
+    this.cdr.detectChanges();
+  }
+
   constructor(
     private shiftsDb: ShiftsDbService,
     private ordersDb: OrdersDbService,
+    private showsDb: ShowsDbService,
     private pinService: PinService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -365,10 +469,13 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   private async loadData() {
-    const [shifts, allOrders] = await Promise.all([
+    const [shifts, allOrders, shows] = await Promise.all([
       this.shiftsDb.getAllShifts(),
       this.ordersDb.getAllOrders(),
+      this.showsDb.getAllShows(),
     ]);
+
+    this.allShows = shows.sort((a, b) => b.createdAt - a.createdAt);
 
     // Schichten aufbauen
     this.shiftRows = shifts
@@ -417,8 +524,9 @@ export class AdminDashboardComponent implements OnInit {
       hour: '2-digit', minute: '2-digit'
     });
 
-    const shiftsHtml = this.shiftRows.map((row, i) => `
+    const shiftsHtml = this.filteredShiftRows.map((row) => `
       <tr>
+        <td>${row.shift.showName || '—'}</td>
         <td>${this.formatDate(row.shift.openedAt)}</td>
         <td>${this.formatTime(row.shift.openedAt)}</td>
         <td>${row.shift.closedAt ? this.formatTime(row.shift.closedAt) : '—'}</td>
@@ -436,6 +544,10 @@ export class AdminDashboardComponent implements OnInit {
         <td>${this.formatEUR(p.totalCents)}</td>
       </tr>
     `).join('');
+
+    const filterLabel = this.selectedShowId === 'all'
+      ? 'Alle Shows'
+      : this.selectedShowName;
 
     const html = `
       <!DOCTYPE html>
@@ -462,19 +574,19 @@ export class AdminDashboardComponent implements OnInit {
       </head>
       <body>
         <h1>POS Show — Admin Report</h1>
-        <p class="meta">Generiert am ${now}</p>
+        <p class="meta">Generiert am ${now} · Filter: ${filterLabel}</p>
 
         <div class="kpi-row">
-          <div class="kpi"><div class="kpi-label">Gesamt Umsatz</div><div class="kpi-value">${this.formatEUR(this.totalRevenueCents)}</div></div>
-          <div class="kpi"><div class="kpi-label">Kassenschichten</div><div class="kpi-value">${this.shiftRows.length}</div></div>
-          <div class="kpi"><div class="kpi-label">Verkäufe gesamt</div><div class="kpi-value">${this.totalOrders}</div></div>
-          <div class="kpi"><div class="kpi-label">Ø pro Schicht</div><div class="kpi-value">${this.formatEUR(this.avgPerShift)}</div></div>
+          <div class="kpi"><div class="kpi-label">Gesamt Umsatz</div><div class="kpi-value">${this.formatEUR(this.filteredRevenueCents)}</div></div>
+          <div class="kpi"><div class="kpi-label">Kassenschichten</div><div class="kpi-value">${this.filteredShiftRows.length}</div></div>
+          <div class="kpi"><div class="kpi-label">Verkäufe gesamt</div><div class="kpi-value">${this.filteredOrderCount}</div></div>
+          <div class="kpi"><div class="kpi-label">Ø pro Schicht</div><div class="kpi-value">${this.formatEUR(this.filteredAvgPerShift)}</div></div>
         </div>
 
         <h2>Kassenschichten</h2>
         <table>
-          <thead><tr><th>Datum</th><th>Geöffnet</th><th>Geschlossen</th><th>Verkäufe</th><th>Umsatz</th><th>Status</th></tr></thead>
-          <tbody>${shiftsHtml || '<tr><td colspan="6">Keine Daten</td></tr>'}</tbody>
+          <thead><tr><th>Show</th><th>Datum</th><th>Geöffnet</th><th>Geschlossen</th><th>Verkäufe</th><th>Umsatz</th><th>Status</th></tr></thead>
+          <tbody>${shiftsHtml || '<tr><td colspan="7">Keine Daten</td></tr>'}</tbody>
         </table>
 
         <h2>Meistverkaufte Produkte</h2>

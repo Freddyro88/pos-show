@@ -1,4 +1,4 @@
-<!-- ─── PIN MODAL ─────────────────────────────────── -->
+<!-- ─── PIN MODAL ─────────────────────────────────────────────────────────── -->
 @if (showPinModal) {
   <app-pin-modal
     [mode]="pinModalMode"
@@ -8,7 +8,7 @@
   </app-pin-modal>
 }
 
-<!-- ─── KASSENSCHICHT GESCHLOSSEN ─────────────────── -->
+<!-- ─── KASSENSCHICHT GESCHLOSSEN ─────────────────────────────────────────── -->
 @if (closedShift) {
   <app-shift-summary
     [shift]="closedShift"
@@ -16,11 +16,11 @@
     (newShift)="openShift()">
   </app-shift-summary>
 
-<!-- ─── KEINE KASSENSCHICHT AKTIV ─────────────────── -->
+<!-- ─── KEINE KASSENSCHICHT AKTIV ─────────────────────────────────────────── -->
 } @else if (!activeShift) {
   <div class="shift-screen">
     <div class="shift-box">
-      <div class="shift-icon">🎭</div>
+      <div class="shift-icon">🏪</div>
       <h1 class="shift-title">POS Show</h1>
       <p class="shift-subtitle">Keine offene Kassenschicht</p>
 
@@ -30,8 +30,8 @@
           Keine Shows vorhanden.<br>
           Bitte zuerst im Admin einen Show erstellen.
         </p>
-        <button class="btn-open-shift btn-goto-admin" routerLink="/shows">
-          🎭 Shows verwalten
+        <button class="btn-open-shift btn-goto-admin" routerLink="/dashboard">
+          📊 Zum Admin
         </button>
 
       <!-- Shows vorhanden → Dropdown + Kassenschicht öffnen -->
@@ -49,13 +49,13 @@
     </div>
   </div>
 
-<!-- ─── POS AKTIV ──────────────────────────────────── -->
+<!-- ─── POS AKTIV ──────────────────────────────────────────────────────────── -->
 } @else {
   <div class="pos-layout">
 
-    <!-- ══════════════════════════════════════════════
+    <!-- ══════════════════════════════════════
          PANEL LINKS — Produkte
-    ══════════════════════════════════════════════ -->
+    ══════════════════════════════════════ -->
     <section class="products-panel">
       <div class="panel-header">
         <span class="brand">POS Show</span>
@@ -71,15 +71,15 @@
       </div>
     </section>
 
-    <!-- ══════════════════════════════════════════════
+    <!-- ══════════════════════════════════════
          PANEL RECHTS — Checkout + Numpad
-    ══════════════════════════════════════════════ -->
+    ══════════════════════════════════════ -->
     <aside class="checkout-panel">
 
       <!-- Shift Info Bar — zeigt Show-Name + Öffnungszeit -->
       <div class="shift-info">
         <span class="shift-label">
-          🎭 {{ activeShift.showName }} &nbsp;·&nbsp;
+          🎪 {{ activeShift.showName }} &nbsp;·&nbsp;
           ● offen seit {{ formatDateTime(activeShift.openedAt) }}
         </span>
         <div>
@@ -194,7 +194,7 @@
 
           <!-- KASSIEREN Button -->
           <button class="btn-kassieren" (click)="checkout()" [disabled]="!canKassieren">
-            <span class="btn-icon">✔</span> KASSIEREN
+            <span class="btn-icon">✓</span> KASSIEREN
           </button>
 
         </div>
